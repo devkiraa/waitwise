@@ -2,12 +2,12 @@
   "rules": {
     "menu": {
       ".read": "auth != null",
-      ".write": "auth != null && auth.token.admin === true"
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
     },
     "users": {
       "$uid": {
-        ".read": "auth != null && auth.uid === $uid",
-        ".write": "auth != null && auth.uid === $uid"
+        ".read": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || (auth.uid === $uid && (!data.exists() && (!newData.hasChild('role') || newData.child('role').val() === 'customer') || (data.exists() && (!newData.hasChild('role') || newData.child('role').val() === data.child('role').val())))))"
       }
     },
     "carts": {
@@ -18,10 +18,10 @@
     },
     "orders": {
       ".read": "auth != null",
-      ".indexOn": ["userId", "createdAt"],
+      ".indexOn": ["userId", "createdAt", "orderStatus"],
       "$orderId": {
-        ".read": "auth != null && (data.child('userId').val() === auth.uid || auth.token.staff === true)",
-        ".write": "auth != null && (!data.exists() && newData.child('userId').val() === auth.uid || auth.token.staff === true)",
+        ".read": "auth != null && (data.child('userId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || (!data.exists() && newData.child('userId').val() === auth.uid && newData.child('orderStatus').val() === 'PLACED'))",
         ".validate": "newData.hasChildren(['userId', 'tokenNumber', 'subtotal', 'paymentMethod', 'orderStatus', 'createdAt'])"
       }
     },

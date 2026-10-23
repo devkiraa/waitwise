@@ -27,10 +27,14 @@ public class ProfileActivity extends AppCompatActivity {
     private TextView tvAvatarInitial;
     private TextView tvProfileName;
     private TextView tvProfileEmail;
+    private TextView tvProfileRoleBadge;
     private EditText etEditName;
     private ProgressBar progressBarProfile;
     private MaterialButton btnUpdateProfile;
     private MaterialButton btnLogout;
+
+    private View dividerAdmin;
+    private TextView tvProfileAdminConsole;
 
     private UserRepository userRepository;
     private String currentUserId;
@@ -59,10 +63,14 @@ public class ProfileActivity extends AppCompatActivity {
         tvAvatarInitial = findViewById(R.id.tvAvatarInitial);
         tvProfileName = findViewById(R.id.tvProfileName);
         tvProfileEmail = findViewById(R.id.tvProfileEmail);
+        tvProfileRoleBadge = findViewById(R.id.tvProfileRoleBadge);
         etEditName = findViewById(R.id.etEditName);
         progressBarProfile = findViewById(R.id.progressBarProfile);
         btnUpdateProfile = findViewById(R.id.btnUpdateProfile);
         btnLogout = findViewById(R.id.btnLogout);
+
+        dividerAdmin = findViewById(R.id.dividerAdmin);
+        tvProfileAdminConsole = findViewById(R.id.tvProfileAdminConsole);
 
         findViewById(R.id.btnBackProfile).setOnClickListener(v -> finish());
 
@@ -72,6 +80,10 @@ public class ProfileActivity extends AppCompatActivity {
 
         findViewById(R.id.tvProfileMyTokens).setOnClickListener(v -> {
             startActivity(new Intent(ProfileActivity.this, MyTokensActivity.class));
+        });
+
+        tvProfileAdminConsole.setOnClickListener(v -> {
+            startActivity(new Intent(ProfileActivity.this, AdminDashboardActivity.class));
         });
 
         btnUpdateProfile.setOnClickListener(v -> handleUpdateName());
@@ -86,8 +98,7 @@ public class ProfileActivity extends AppCompatActivity {
                 ? fbUser.getDisplayName()
                 : (email != null && email.contains("@") ? email.split("@")[0] : "Customer");
 
-        // Immediately display available credentials
-        displayUserData(initialName, email != null ? email : "");
+        displayUserData(initialName, email != null ? email : "", User.ROLE_CUSTOMER);
 
         progressBarProfile.setVisibility(View.VISIBLE);
 
@@ -96,21 +107,27 @@ public class ProfileActivity extends AppCompatActivity {
             public void onUserLoaded(User user) {
                 progressBarProfile.setVisibility(View.GONE);
                 currentUser = user;
-                displayUserData(user.getName(), user.getEmail());
+                displayUserData(user.getName(), user.getEmail(), user.getRole());
             }
 
             @Override
             public void onError(String errorMessage) {
                 progressBarProfile.setVisibility(View.GONE);
-                // Auth display name is already showing as fallback
             }
         });
     }
 
-    private void displayUserData(String name, String email) {
+    private void displayUserData(String name, String email, String role) {
         tvProfileName.setText(name);
         tvProfileEmail.setText(email);
         etEditName.setText(name);
+
+        String displayRole = (role != null ? role : User.ROLE_CUSTOMER).toUpperCase(Locale.ROOT);
+        tvProfileRoleBadge.setText(displayRole);
+
+        boolean isAdmin = User.ROLE_ADMIN.equalsIgnoreCase(role);
+        if (dividerAdmin != null) dividerAdmin.setVisibility(isAdmin ? View.VISIBLE : View.GONE);
+        if (tvProfileAdminConsole != null) tvProfileAdminConsole.setVisibility(isAdmin ? View.VISIBLE : View.GONE);
 
         if (!TextUtils.isEmpty(name)) {
             tvAvatarInitial.setText(name.substring(0, 1).toUpperCase(Locale.ROOT));
@@ -130,7 +147,6 @@ public class ProfileActivity extends AppCompatActivity {
         progressBarProfile.setVisibility(View.VISIBLE);
         btnUpdateProfile.setEnabled(false);
 
-        // Update Firebase Auth profile display name
         FirebaseUser fbUser = FirebaseManager.getInstance().getCurrentUser();
         if (fbUser != null) {
             UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
@@ -139,8 +155,9 @@ public class ProfileActivity extends AppCompatActivity {
             fbUser.updateProfile(profileUpdates);
         }
 
+        String existingRole = currentUser != null ? currentUser.getRole() : User.ROLE_CUSTOMER;
         if (currentUser == null) {
-            currentUser = new User(currentUserId, newName, FirebaseManager.getInstance().getCurrentUserEmail(), System.currentTimeMillis());
+            currentUser = new User(currentUserId, newName, FirebaseManager.getInstance().getCurrentUserEmail(), existingRole, System.currentTimeMillis());
         } else {
             currentUser.setName(newName);
         }
@@ -150,7 +167,7 @@ public class ProfileActivity extends AppCompatActivity {
             public void onSuccess() {
                 progressBarProfile.setVisibility(View.GONE);
                 btnUpdateProfile.setEnabled(true);
-                displayUserData(newName, currentUser.getEmail());
+                displayUserData(newName, currentUser.getEmail(), currentUser.getRole());
                 Toast.makeText(ProfileActivity.this, "Profile updated successfully!", Toast.LENGTH_SHORT).show();
             }
 
@@ -158,8 +175,8 @@ public class ProfileActivity extends AppCompatActivity {
             public void onError(String errorMessage) {
                 progressBarProfile.setVisibility(View.GONE);
                 btnUpdateProfile.setEnabled(true);
-                displayUserData(newName, currentUser.getEmail());
-                Toast.makeText(ProfileActivity.this, "Saved locally. Server notice: " + errorMessage, Toast.LENGTH_SHORT).show();
+                displayUserData(newName, currentUser.getEmail(), currentUser.getRole());
+                Toast.makeText(ProfileActivity.this, "Saved locally. Notice: " + errorMessage, Toast.LENGTH_SHORT).show();
             }
         });
     }

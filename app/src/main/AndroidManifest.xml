@@ -57,6 +57,27 @@
             android:name=".activities.ProfileActivity"
             android:exported="false" />
 
+        <!-- Administrator activities -->
+        <activity
+            android:name=".activities.AdminDashboardActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.AddProductActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.ManageProductsActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.AdminOrdersActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.AdminTokensActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>

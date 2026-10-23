@@ -72,6 +72,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
         });
 
         setContentView(R.layout.activity_admin_dashboard);
+        com.example.waitwise.utils.EdgeToEdgeUtils.applyEdgeToEdge(this, findViewById(R.id.adminDashboardRoot));
 
         menuRepository = new MenuRepository();
         orderRepository = new OrderRepository();

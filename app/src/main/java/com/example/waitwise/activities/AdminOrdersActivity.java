@@ -19,6 +19,7 @@ import com.example.waitwise.models.Order;
 import com.example.waitwise.models.User;
 import com.example.waitwise.repositories.OrderRepository;
 import com.example.waitwise.repositories.UserRepository;
+import com.example.waitwise.utils.EdgeToEdgeUtils;
 import com.example.waitwise.utils.FirebaseManager;
 import com.google.android.material.button.MaterialButton;
 
@@ -77,6 +78,7 @@ public class AdminOrdersActivity extends AppCompatActivity implements AdminOrder
         });
 
         setContentView(R.layout.activity_admin_orders);
+        EdgeToEdgeUtils.applyEdgeToEdge(this, findViewById(R.id.adminOrdersRoot));
 
         orderRepository = new OrderRepository();
 

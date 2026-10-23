@@ -30,6 +30,7 @@ import com.example.waitwise.models.CartItem;
 import com.example.waitwise.models.FoodItem;
 import com.example.waitwise.repositories.CartRepository;
 import com.example.waitwise.repositories.MenuRepository;
+import com.example.waitwise.utils.EdgeToEdgeUtils;
 import com.example.waitwise.utils.FirebaseManager;
 import com.google.android.material.button.MaterialButton;
 
@@ -82,22 +83,8 @@ public class MainActivity extends AppCompatActivity implements FoodAdapter.OnFoo
             return;
         }
 
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
-
-        View mainView = findViewById(R.id.main);
-        if (mainView != null) {
-            ViewCompat.setOnApplyWindowInsetsListener(mainView, (view, insets) -> {
-                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-                view.setPadding(
-                        systemBars.left,
-                        systemBars.top,
-                        systemBars.right,
-                        systemBars.bottom
-                );
-                return insets;
-            });
-        }
+        EdgeToEdgeUtils.applyEdgeToEdge(this, findViewById(R.id.main));
 
         menuRepository = new MenuRepository();
         cartRepository = new CartRepository();

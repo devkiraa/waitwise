@@ -19,6 +19,7 @@ public class OrderConfirmationActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_order_confirmation);
+        com.example.waitwise.utils.EdgeToEdgeUtils.applyEdgeToEdge(this, findViewById(R.id.orderConfirmationRoot));
 
         Order order;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

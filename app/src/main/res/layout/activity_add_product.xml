@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/addProductRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/ww_background"
@@ -11,34 +12,36 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:paddingStart="22dp"
-        android:paddingTop="24dp"
+        android:paddingTop="8dp"
         android:paddingEnd="22dp"
         android:paddingBottom="36dp">
 
-        <!-- Top AppBar -->
+        <!-- Top AppBar (56dp standard height, vertically centered) -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="56dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <com.google.android.material.button.MaterialButton
+            <ImageButton
                 android:id="@+id/btnBackAddProduct"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:minWidth="0dp"
-                android:padding="0dp"
-                android:text="←"
-                android:textColor="@color/ww_text_primary"
-                android:textSize="22sp" />
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Navigate back"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_arrow_back"
+                app:tint="@color/ww_text_primary" />
 
             <TextView
                 android:id="@+id/tvAddProductTitle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
                 android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
                 android:text="Add Food Product"
                 android:textColor="@color/ww_text_primary"
                 android:textSize="20sp"

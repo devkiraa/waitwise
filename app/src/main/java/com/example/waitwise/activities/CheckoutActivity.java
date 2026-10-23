@@ -63,6 +63,7 @@ public class CheckoutActivity extends AppCompatActivity {
         }
 
         setContentView(R.layout.activity_checkout);
+        com.example.waitwise.utils.EdgeToEdgeUtils.applyEdgeToEdge(this, findViewById(R.id.checkoutRoot));
 
         cartRepository = new CartRepository();
         menuRepository = new MenuRepository();

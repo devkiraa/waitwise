@@ -17,6 +17,7 @@ import com.example.waitwise.MainActivity;
 import com.example.waitwise.R;
 import com.example.waitwise.models.User;
 import com.example.waitwise.repositories.UserRepository;
+import com.example.waitwise.utils.EdgeToEdgeUtils;
 import com.example.waitwise.utils.FirebaseManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
@@ -33,19 +34,19 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_login);
+        EdgeToEdgeUtils.applyEdgeToEdge(this, findViewById(R.id.loginRoot));
 
         userRepository = new UserRepository();
 
         // If already logged in, check role and route appropriately
         if (FirebaseManager.getInstance().isUserLoggedIn()) {
-            setContentView(R.layout.activity_login);
             initializeViews();
             setLoading(true);
             routeBasedOnRole(FirebaseManager.getInstance().getCurrentUserId());
             return;
         }
 
-        setContentView(R.layout.activity_login);
         initializeViews();
     }
 

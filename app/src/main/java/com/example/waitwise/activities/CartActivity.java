@@ -18,6 +18,7 @@ import com.example.waitwise.models.CartItem;
 import com.example.waitwise.models.FoodItem;
 import com.example.waitwise.repositories.CartRepository;
 import com.example.waitwise.repositories.MenuRepository;
+import com.example.waitwise.utils.EdgeToEdgeUtils;
 import com.example.waitwise.utils.FirebaseManager;
 import com.example.waitwise.utils.PriceUtils;
 import com.google.android.material.button.MaterialButton;
@@ -59,6 +60,7 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.CartI
         }
 
         setContentView(R.layout.activity_cart);
+        EdgeToEdgeUtils.applyEdgeToEdge(this, findViewById(R.id.cartRoot));
 
         cartRepository = new CartRepository();
         menuRepository = new MenuRepository();
@@ -114,7 +116,6 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.CartI
     private void loadMenuAndCart() {
         progressBarCart.setVisibility(View.VISIBLE);
 
-        // First listen to menu so we have verified current prices and names
         menuRepository.listenToMenu(new MenuRepository.MenuCallback() {
             @Override
             public void onMenuLoaded(List<FoodItem> items) {
@@ -123,7 +124,6 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.CartI
                     menuMap.put(item.getId(), item);
                 }
 
-                // Now listen to cart
                 cartRepository.listenToUserCart(currentUserId, new CartRepository.CartCallback() {
                     @Override
                     public void onCartLoaded(List<CartItem> items) {

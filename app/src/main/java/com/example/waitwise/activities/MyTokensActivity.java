@@ -41,6 +41,7 @@ public class MyTokensActivity extends AppCompatActivity implements TokenAdapter.
         }
 
         setContentView(R.layout.activity_my_tokens);
+        com.example.waitwise.utils.EdgeToEdgeUtils.applyEdgeToEdge(this, findViewById(R.id.tokensRoot));
 
         orderRepository = new OrderRepository();
 

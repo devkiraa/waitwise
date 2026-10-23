@@ -18,6 +18,7 @@ import com.example.waitwise.models.Order;
 import com.example.waitwise.models.User;
 import com.example.waitwise.repositories.OrderRepository;
 import com.example.waitwise.repositories.UserRepository;
+import com.example.waitwise.utils.EdgeToEdgeUtils;
 import com.example.waitwise.utils.FirebaseManager;
 import com.google.android.material.button.MaterialButton;
 
@@ -75,6 +76,7 @@ public class AdminTokensActivity extends AppCompatActivity implements AdminToken
         });
 
         setContentView(R.layout.activity_admin_tokens);
+        EdgeToEdgeUtils.applyEdgeToEdge(this, findViewById(R.id.adminTokensRoot));
 
         orderRepository = new OrderRepository();
 

@@ -23,6 +23,7 @@ import com.example.waitwise.models.FoodItem;
 import com.example.waitwise.models.User;
 import com.example.waitwise.repositories.MenuRepository;
 import com.example.waitwise.repositories.UserRepository;
+import com.example.waitwise.utils.EdgeToEdgeUtils;
 import com.example.waitwise.utils.FirebaseManager;
 import com.google.android.material.button.MaterialButton;
 
@@ -86,6 +87,7 @@ public class ManageProductsActivity extends AppCompatActivity implements AdminPr
         });
 
         setContentView(R.layout.activity_manage_products);
+        EdgeToEdgeUtils.applyEdgeToEdge(this, findViewById(R.id.manageProductsRoot));
 
         menuRepository = new MenuRepository();
 

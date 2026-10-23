@@ -41,6 +41,7 @@ public class MyOrdersActivity extends AppCompatActivity implements OrderAdapter.
         }
 
         setContentView(R.layout.activity_my_orders);
+        com.example.waitwise.utils.EdgeToEdgeUtils.applyEdgeToEdge(this, findViewById(R.id.ordersRoot));
 
         orderRepository = new OrderRepository();
 

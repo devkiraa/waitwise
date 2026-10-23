@@ -1,0 +1,70 @@
+{
+  "menu": {
+    "food_001": {
+      "id": "food_001",
+      "name": "Masala Dosa",
+      "description": "Crispy golden crepe filled with spiced potato masala, served with coconut chutney & sambar.",
+      "price": 60,
+      "category": "Breakfast",
+      "imageUrl": "https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=400",
+      "available": true
+    },
+    "food_002": {
+      "id": "food_002",
+      "name": "Idli Vada Combo",
+      "description": "Two steamed rice cakes and a crispy medu vada served with piping hot sambar.",
+      "price": 50,
+      "category": "Breakfast",
+      "imageUrl": "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=400",
+      "available": true
+    },
+    "food_003": {
+      "id": "food_003",
+      "name": "Grilled Cheese Sandwich",
+      "description": "Toasted buttered bread loaded with vegetables, cheese, and mint chutney.",
+      "price": 80,
+      "category": "Snacks",
+      "imageUrl": "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=400",
+      "available": true
+    },
+    "food_004": {
+      "id": "food_004",
+      "name": "Special Veg Thali",
+      "description": "Complete meal with paneer curry, dal tadka, 2 rotis, jeera rice, and dessert.",
+      "price": 120,
+      "category": "Meals",
+      "imageUrl": "https://images.unsplash.com/photo-1610057099443-fde8c4d50f91?w=400",
+      "available": true
+    },
+    "food_005": {
+      "id": "food_005",
+      "name": "Crispy Samosa (2 pcs)",
+      "description": "Deep fried pastry pockets stuffed with spiced potato and pea filling.",
+      "price": 30,
+      "category": "Snacks",
+      "imageUrl": "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400",
+      "available": true
+    },
+    "food_006": {
+      "id": "food_006",
+      "name": "South Indian Filter Coffee",
+      "description": "Aromatic decoction blended with hot frothed milk.",
+      "price": 25,
+      "category": "Drinks",
+      "imageUrl": "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400",
+      "available": true
+    },
+    "food_007": {
+      "id": "food_007",
+      "name": "Chilled Cold Coffee",
+      "description": "Blended rich espresso with chilled milk and ice cream topping.",
+      "price": 45,
+      "category": "Drinks",
+      "imageUrl": "https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=400",
+      "available": true
+    }
+  },
+  "tokens": {
+    "lastToken": 1000
+  }
+}

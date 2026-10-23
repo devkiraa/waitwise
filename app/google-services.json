@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1026314330497",
+    "project_id": "waitwise-in",
+    "storage_bucket": "waitwise-in.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1026314330497:android:1255156c8afb4189d54880",
+        "android_client_info": {
+          "package_name": "com.example.waitwise"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0VNwYkXMF2nt99Vt2DQxFcH3p8qST_GA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

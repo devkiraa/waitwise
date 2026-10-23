@@ -1,0 +1,35 @@
+{
+  "rules": {
+    "menu": {
+      ".read": "auth != null",
+      ".write": "auth != null && auth.token.admin === true"
+    },
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "carts": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "orders": {
+      ".read": "auth != null",
+      ".indexOn": ["userId", "createdAt"],
+      "$orderId": {
+        ".read": "auth != null && (data.child('userId').val() === auth.uid || auth.token.staff === true)",
+        ".write": "auth != null && (!data.exists() && newData.child('userId').val() === auth.uid || auth.token.staff === true)",
+        ".validate": "newData.hasChildren(['userId', 'tokenNumber', 'subtotal', 'paymentMethod', 'orderStatus', 'createdAt'])"
+      }
+    },
+    "tokens": {
+      "lastToken": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    }
+  }
+}

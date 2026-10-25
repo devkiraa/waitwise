@@ -2,12 +2,12 @@ package com.example.waitwise.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -15,12 +15,16 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.waitwise.R;
 import com.example.waitwise.models.User;
 import com.example.waitwise.repositories.UserRepository;
+import com.example.waitwise.utils.FcmTokenManager;
 import com.example.waitwise.utils.FirebaseManager;
+import com.example.waitwise.utils.PopupUtils;
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
 
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ProfileActivity extends AppCompatActivity {
 
@@ -29,7 +33,7 @@ public class ProfileActivity extends AppCompatActivity {
     private TextView tvProfileEmail;
     private TextView tvProfileRoleBadge;
     private EditText etEditName;
-    private ProgressBar progressBarProfile;
+    private ShimmerFrameLayout shimmerProfile;
     private MaterialButton btnUpdateProfile;
     private MaterialButton btnLogout;
 
@@ -57,6 +61,7 @@ public class ProfileActivity extends AppCompatActivity {
         userRepository = new UserRepository();
 
         initializeViews();
+        setupNavigation();
         loadProfile();
     }
 
@@ -66,7 +71,7 @@ public class ProfileActivity extends AppCompatActivity {
         tvProfileEmail = findViewById(R.id.tvProfileEmail);
         tvProfileRoleBadge = findViewById(R.id.tvProfileRoleBadge);
         etEditName = findViewById(R.id.etEditName);
-        progressBarProfile = findViewById(R.id.progressBarProfile);
+        shimmerProfile = findViewById(R.id.shimmerProfile);
         btnUpdateProfile = findViewById(R.id.btnUpdateProfile);
         btnLogout = findViewById(R.id.btnLogout);
 
@@ -92,6 +97,33 @@ public class ProfileActivity extends AppCompatActivity {
         btnLogout.setOnClickListener(v -> confirmLogout());
     }
 
+    private void setupNavigation() {
+        View navHome = findViewById(R.id.navHome);
+        View navOrders = findViewById(R.id.navOrders);
+        View navTokens = findViewById(R.id.navTokens);
+
+        if (navHome != null) {
+            navHome.setOnClickListener(v -> {
+                Intent intent = new Intent(ProfileActivity.this, com.example.waitwise.MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+                finish();
+            });
+        }
+        if (navOrders != null) {
+            navOrders.setOnClickListener(v -> {
+                startActivity(new Intent(ProfileActivity.this, MyOrdersActivity.class));
+                finish();
+            });
+        }
+        if (navTokens != null) {
+            navTokens.setOnClickListener(v -> {
+                startActivity(new Intent(ProfileActivity.this, MyTokensActivity.class));
+                finish();
+            });
+        }
+    }
+
     private void loadProfile() {
         String email = FirebaseManager.getInstance().getCurrentUserEmail();
         FirebaseUser fbUser = FirebaseManager.getInstance().getCurrentUser();
@@ -101,19 +133,46 @@ public class ProfileActivity extends AppCompatActivity {
 
         displayUserData(initialName, email != null ? email : "", User.ROLE_CUSTOMER);
 
-        progressBarProfile.setVisibility(View.VISIBLE);
+        if (shimmerProfile != null) {
+            shimmerProfile.startShimmer();
+            shimmerProfile.setVisibility(View.VISIBLE);
+        }
+
+        AtomicBoolean loaded = new AtomicBoolean(false);
+        Handler handler = new Handler(Looper.getMainLooper());
+        Runnable timeoutRunnable = () -> {
+            if (loaded.compareAndSet(false, true)) {
+                if (shimmerProfile != null) {
+                    shimmerProfile.stopShimmer();
+                    shimmerProfile.setVisibility(View.GONE);
+                }
+            }
+        };
+        handler.postDelayed(timeoutRunnable, 3500);
 
         userRepository.getUserProfile(currentUserId, new UserRepository.UserCallback() {
             @Override
             public void onUserLoaded(User user) {
-                progressBarProfile.setVisibility(View.GONE);
+                if (loaded.compareAndSet(false, true)) {
+                    handler.removeCallbacks(timeoutRunnable);
+                }
+                if (shimmerProfile != null) {
+                    shimmerProfile.stopShimmer();
+                    shimmerProfile.setVisibility(View.GONE);
+                }
                 currentUser = user;
                 displayUserData(user.getName(), user.getEmail(), user.getRole());
             }
 
             @Override
             public void onError(String errorMessage) {
-                progressBarProfile.setVisibility(View.GONE);
+                if (loaded.compareAndSet(false, true)) {
+                    handler.removeCallbacks(timeoutRunnable);
+                }
+                if (shimmerProfile != null) {
+                    shimmerProfile.stopShimmer();
+                    shimmerProfile.setVisibility(View.GONE);
+                }
             }
         });
     }
@@ -145,7 +204,10 @@ public class ProfileActivity extends AppCompatActivity {
             return;
         }
 
-        progressBarProfile.setVisibility(View.VISIBLE);
+        if (shimmerProfile != null) {
+            shimmerProfile.startShimmer();
+            shimmerProfile.setVisibility(View.VISIBLE);
+        }
         btnUpdateProfile.setEnabled(false);
 
         FirebaseUser fbUser = FirebaseManager.getInstance().getCurrentUser();
@@ -166,18 +228,24 @@ public class ProfileActivity extends AppCompatActivity {
         userRepository.saveUserProfile(currentUser, new UserRepository.ActionCallback() {
             @Override
             public void onSuccess() {
-                progressBarProfile.setVisibility(View.GONE);
+                if (shimmerProfile != null) {
+                    shimmerProfile.stopShimmer();
+                    shimmerProfile.setVisibility(View.GONE);
+                }
                 btnUpdateProfile.setEnabled(true);
                 displayUserData(newName, currentUser.getEmail(), currentUser.getRole());
-                Toast.makeText(ProfileActivity.this, "Profile updated successfully!", Toast.LENGTH_SHORT).show();
+                PopupUtils.showPopup(ProfileActivity.this, "Profile Updated", "Your profile details have been saved successfully!");
             }
 
             @Override
             public void onError(String errorMessage) {
-                progressBarProfile.setVisibility(View.GONE);
+                if (shimmerProfile != null) {
+                    shimmerProfile.stopShimmer();
+                    shimmerProfile.setVisibility(View.GONE);
+                }
                 btnUpdateProfile.setEnabled(true);
                 displayUserData(newName, currentUser.getEmail(), currentUser.getRole());
-                Toast.makeText(ProfileActivity.this, "Saved locally. Notice: " + errorMessage, Toast.LENGTH_SHORT).show();
+                PopupUtils.showPopup(ProfileActivity.this, "Profile Saved", "Saved locally. Notice: " + errorMessage);
             }
         });
     }
@@ -187,6 +255,7 @@ public class ProfileActivity extends AppCompatActivity {
                 .setTitle("Log Out")
                 .setMessage("Are you sure you want to log out of WaitWise?")
                 .setPositiveButton("Log Out", (dialog, which) -> {
+                    FcmTokenManager.clearFcmToken(currentUserId);
                     FirebaseManager.getInstance().signOut();
                     Intent intent = new Intent(ProfileActivity.this, LoginActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);

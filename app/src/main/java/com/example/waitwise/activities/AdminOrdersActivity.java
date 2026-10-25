@@ -2,11 +2,14 @@ package com.example.waitwise.activities;
 
 import android.content.res.ColorStateList;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -16,20 +19,26 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.waitwise.R;
 import com.example.waitwise.adapters.AdminOrderAdapter;
 import com.example.waitwise.models.Order;
+import com.example.waitwise.models.OrderItem;
 import com.example.waitwise.models.User;
 import com.example.waitwise.repositories.OrderRepository;
 import com.example.waitwise.repositories.UserRepository;
 import com.example.waitwise.utils.EdgeToEdgeUtils;
 import com.example.waitwise.utils.FirebaseManager;
+import com.example.waitwise.utils.PopupUtils;
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AdminOrdersActivity extends AppCompatActivity implements AdminOrderAdapter.OnOrderAdminActionListener {
 
     private TextView tvAdminOrdersCount;
-    private ProgressBar progressBarAdminOrders;
+    private EditText etSearchAdminOrders;
+    private ShimmerFrameLayout shimmerAdminOrders;
     private LinearLayout layoutEmptyAdminOrders;
     private RecyclerView recyclerAdminOrders;
 
@@ -45,6 +54,7 @@ public class AdminOrdersActivity extends AppCompatActivity implements AdminOrder
     private final List<Order> allOrders = new ArrayList<>();
     private final List<Order> filteredOrders = new ArrayList<>();
     private String selectedFilter = "ALL";
+    private String searchQuery = "";
 
     private final int greenColor = android.graphics.Color.rgb(36, 107, 74);
     private final int whiteColor = android.graphics.Color.WHITE;
@@ -66,7 +76,7 @@ public class AdminOrdersActivity extends AppCompatActivity implements AdminOrder
             @Override
             public void onRoleLoaded(String role) {
                 if (!User.ROLE_ADMIN.equalsIgnoreCase(role)) {
-                    Toast.makeText(AdminOrdersActivity.this, "Access denied.", Toast.LENGTH_SHORT).show();
+                    PopupUtils.showPopup(AdminOrdersActivity.this, "Access Denied", "Administrator access required.");
                     finish();
                 }
             }
@@ -90,7 +100,8 @@ public class AdminOrdersActivity extends AppCompatActivity implements AdminOrder
 
     private void initializeViews() {
         tvAdminOrdersCount = findViewById(R.id.tvAdminOrdersCount);
-        progressBarAdminOrders = findViewById(R.id.progressBarAdminOrders);
+        etSearchAdminOrders = findViewById(R.id.etSearchAdminOrders);
+        shimmerAdminOrders = findViewById(R.id.shimmerAdminOrders);
         layoutEmptyAdminOrders = findViewById(R.id.layoutEmptyAdminOrders);
         recyclerAdminOrders = findViewById(R.id.recyclerAdminOrders);
 
@@ -98,6 +109,22 @@ public class AdminOrdersActivity extends AppCompatActivity implements AdminOrder
         filterOrdersActive = findViewById(R.id.filterOrdersActive);
         filterOrdersReady = findViewById(R.id.filterOrdersReady);
         filterOrdersCompleted = findViewById(R.id.filterOrdersCompleted);
+
+        if (etSearchAdminOrders != null) {
+            etSearchAdminOrders.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    searchQuery = s.toString().trim().toLowerCase(Locale.ROOT);
+                    filterOrdersList();
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {}
+            });
+        }
 
         findViewById(R.id.btnBackAdminOrders).setOnClickListener(v -> finish());
     }
@@ -140,14 +167,36 @@ public class AdminOrdersActivity extends AppCompatActivity implements AdminOrder
     }
 
     private void loadOrders() {
-        progressBarAdminOrders.setVisibility(View.VISIBLE);
+        if (shimmerAdminOrders != null) {
+            shimmerAdminOrders.startShimmer();
+            shimmerAdminOrders.setVisibility(View.VISIBLE);
+        }
         layoutEmptyAdminOrders.setVisibility(View.GONE);
         recyclerAdminOrders.setVisibility(View.GONE);
+
+        AtomicBoolean loaded = new AtomicBoolean(false);
+        Handler handler = new Handler(Looper.getMainLooper());
+        Runnable timeoutRunnable = () -> {
+            if (loaded.compareAndSet(false, true)) {
+                if (shimmerAdminOrders != null) {
+                    shimmerAdminOrders.stopShimmer();
+                    shimmerAdminOrders.setVisibility(View.GONE);
+                }
+                layoutEmptyAdminOrders.setVisibility(View.VISIBLE);
+            }
+        };
+        handler.postDelayed(timeoutRunnable, 3500);
 
         orderRepository.listenToAllOrders(new OrderRepository.OrdersCallback() {
             @Override
             public void onOrdersLoaded(List<Order> orders) {
-                progressBarAdminOrders.setVisibility(View.GONE);
+                if (loaded.compareAndSet(false, true)) {
+                    handler.removeCallbacks(timeoutRunnable);
+                }
+                if (shimmerAdminOrders != null) {
+                    shimmerAdminOrders.stopShimmer();
+                    shimmerAdminOrders.setVisibility(View.GONE);
+                }
                 allOrders.clear();
                 allOrders.addAll(orders);
                 filterOrdersList();
@@ -155,8 +204,15 @@ public class AdminOrdersActivity extends AppCompatActivity implements AdminOrder
 
             @Override
             public void onError(String errorMessage) {
-                progressBarAdminOrders.setVisibility(View.GONE);
-                Toast.makeText(AdminOrdersActivity.this, "Error: " + errorMessage, Toast.LENGTH_SHORT).show();
+                if (loaded.compareAndSet(false, true)) {
+                    handler.removeCallbacks(timeoutRunnable);
+                }
+                if (shimmerAdminOrders != null) {
+                    shimmerAdminOrders.stopShimmer();
+                    shimmerAdminOrders.setVisibility(View.GONE);
+                }
+                layoutEmptyAdminOrders.setVisibility(View.VISIBLE);
+                PopupUtils.showPopup(AdminOrdersActivity.this, "Error", errorMessage);
             }
         });
     }
@@ -166,27 +222,40 @@ public class AdminOrdersActivity extends AppCompatActivity implements AdminOrder
 
         for (Order order : allOrders) {
             String status = order.getOrderStatus();
-            boolean match = false;
+            boolean matchesStatus = false;
 
             switch (selectedFilter) {
                 case "ALL":
-                    match = true;
+                    matchesStatus = true;
                     break;
                 case "ACTIVE":
-                    match = Order.STATUS_PLACED.equalsIgnoreCase(status)
+                    matchesStatus = Order.STATUS_PLACED.equalsIgnoreCase(status)
                             || Order.STATUS_ACCEPTED.equalsIgnoreCase(status)
                             || Order.STATUS_PREPARING.equalsIgnoreCase(status);
                     break;
                 case "READY":
-                    match = Order.STATUS_READY.equalsIgnoreCase(status);
+                    matchesStatus = Order.STATUS_READY.equalsIgnoreCase(status);
                     break;
                 case "COMPLETED":
-                    match = Order.STATUS_COLLECTED.equalsIgnoreCase(status)
+                    matchesStatus = Order.STATUS_COLLECTED.equalsIgnoreCase(status)
                             || Order.STATUS_CANCELLED.equalsIgnoreCase(status);
                     break;
             }
 
-            if (match) {
+            String tokenStr = String.valueOf(order.getTokenNumber());
+            String orderIdStr = order.getOrderId() != null ? order.getOrderId() : "";
+
+            StringBuilder itemNamesSb = new StringBuilder();
+            if (order.getItems() != null) {
+                for (OrderItem item : order.getItems().values()) {
+                    if (item != null) itemNamesSb.append(item.getName()).append(" ");
+                }
+            }
+            String combinedText = (tokenStr + " #" + tokenStr + " " + orderIdStr + " " + itemNamesSb.toString()).toLowerCase(Locale.ROOT);
+
+            boolean matchesSearch = searchQuery.isEmpty() || combinedText.contains(searchQuery);
+
+            if (matchesStatus && matchesSearch) {
                 filteredOrders.add(order);
             }
         }
@@ -209,12 +278,12 @@ public class AdminOrdersActivity extends AppCompatActivity implements AdminOrder
         orderRepository.updateOrderStatus(order.getOrderId(), nextStatus, new OrderRepository.ActionCallback() {
             @Override
             public void onSuccess() {
-                Toast.makeText(AdminOrdersActivity.this, "Token #" + order.getTokenNumber() + " updated to " + nextStatus, Toast.LENGTH_SHORT).show();
+                PopupUtils.showPopup(AdminOrdersActivity.this, "Status Updated", "Token #" + order.getTokenNumber() + " status is now " + nextStatus);
             }
 
             @Override
             public void onError(String errorMessage) {
-                Toast.makeText(AdminOrdersActivity.this, "Update error: " + errorMessage, Toast.LENGTH_SHORT).show();
+                PopupUtils.showPopup(AdminOrdersActivity.this, "Update Error", errorMessage);
             }
         });
     }
@@ -228,17 +297,35 @@ public class AdminOrdersActivity extends AppCompatActivity implements AdminOrder
                     orderRepository.updateOrderStatus(order.getOrderId(), Order.STATUS_CANCELLED, new OrderRepository.ActionCallback() {
                         @Override
                         public void onSuccess() {
-                            Toast.makeText(AdminOrdersActivity.this, "Order cancelled.", Toast.LENGTH_SHORT).show();
+                            PopupUtils.showPopup(AdminOrdersActivity.this, "Order Cancelled", "Token #" + order.getTokenNumber() + " was cancelled.");
                         }
 
                         @Override
                         public void onError(String errorMessage) {
-                            Toast.makeText(AdminOrdersActivity.this, "Failed: " + errorMessage, Toast.LENGTH_SHORT).show();
+                            PopupUtils.showPopup(AdminOrdersActivity.this, "Cancellation Error", errorMessage);
                         }
                     });
                 })
                 .setNegativeButton("No", null)
                 .show();
+    }
+
+    @Override
+    public void onUpdatePrepTime(Order order, int minutes) {
+        orderRepository.updateEstimatedPrepTime(order.getOrderId(), minutes, new OrderRepository.ActionCallback() {
+            @Override
+            public void onSuccess() {
+                String msg = minutes > 0
+                        ? "Prep time set to " + minutes + " mins for Token #" + order.getTokenNumber()
+                        : "Prep time cleared for Token #" + order.getTokenNumber();
+                PopupUtils.showPopup(AdminOrdersActivity.this, "Prep Time Set", msg);
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                PopupUtils.showPopup(AdminOrdersActivity.this, "Prep Time Error", errorMessage);
+            }
+        });
     }
 
     @Override

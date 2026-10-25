@@ -10,6 +10,7 @@ public class User implements Serializable {
     private String name;
     private String email;
     private String role = ROLE_CUSTOMER;
+    private String fcmToken;
     private long createdAt;
 
     public User() {
@@ -65,6 +66,14 @@ public class User implements Serializable {
 
     public boolean isAdmin() {
         return ROLE_ADMIN.equalsIgnoreCase(this.role);
+    }
+
+    public String getFcmToken() {
+        return fcmToken != null ? fcmToken : "";
+    }
+
+    public void setFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
     }
 
     public long getCreatedAt() {

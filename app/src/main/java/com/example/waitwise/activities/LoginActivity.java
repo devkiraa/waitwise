@@ -2,6 +2,8 @@ package com.example.waitwise.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Patterns;
 import android.view.View;
@@ -18,16 +20,21 @@ import com.example.waitwise.R;
 import com.example.waitwise.models.User;
 import com.example.waitwise.repositories.UserRepository;
 import com.example.waitwise.utils.EdgeToEdgeUtils;
+import com.example.waitwise.utils.FcmTokenManager;
 import com.example.waitwise.utils.FirebaseManager;
+import com.example.waitwise.utils.PopupUtils;
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class LoginActivity extends AppCompatActivity {
 
     private EditText etEmail;
     private EditText etPassword;
-    private ProgressBar progressBarLogin;
+    private ShimmerFrameLayout shimmerLogin;
     private MaterialButton btnLogin;
     private UserRepository userRepository;
 
@@ -53,7 +60,7 @@ public class LoginActivity extends AppCompatActivity {
     private void initializeViews() {
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
-        progressBarLogin = findViewById(R.id.progressBarLogin);
+        shimmerLogin = findViewById(R.id.shimmerLogin);
         btnLogin = findViewById(R.id.btnLogin);
 
         TextView tvForgotPassword = findViewById(R.id.tvForgotPassword);
@@ -107,30 +114,58 @@ public class LoginActivity extends AppCompatActivity {
                         String errorMsg = task.getException() != null
                                 ? task.getException().getMessage()
                                 : "Authentication failed.";
-                        Toast.makeText(LoginActivity.this, errorMsg, Toast.LENGTH_LONG).show();
+                        PopupUtils.showPopup(LoginActivity.this, "Sign In Failed", errorMsg);
                     }
                 });
     }
 
     private void routeBasedOnRole(String uid) {
+        if (isFinishing() || isDestroyed()) return;
+
+        FcmTokenManager.syncFcmToken(uid);
+
+        AtomicBoolean routed = new AtomicBoolean(false);
+        Handler handler = new Handler(Looper.getMainLooper());
+
+        Runnable safetyTimeout = () -> {
+            if (routed.compareAndSet(false, true)) {
+                if (!isFinishing() && !isDestroyed()) {
+                    setLoading(false);
+                    goToCustomerHome();
+                }
+            }
+        };
+
+        // Safety fallback after 3 seconds
+        handler.postDelayed(safetyTimeout, 3000);
+
         userRepository.getUserRole(uid, new UserRepository.RoleCallback() {
             @Override
             public void onRoleLoaded(String role) {
-                setLoading(false);
-                if (User.ROLE_ADMIN.equalsIgnoreCase(role)) {
-                    Toast.makeText(LoginActivity.this, "Administrator access granted.", Toast.LENGTH_SHORT).show();
-                    goToAdminDashboard();
-                } else {
-                    Toast.makeText(LoginActivity.this, "Welcome back!", Toast.LENGTH_SHORT).show();
-                    goToCustomerHome();
+                if (routed.compareAndSet(false, true)) {
+                    handler.removeCallbacks(safetyTimeout);
+                    if (!isFinishing() && !isDestroyed()) {
+                        setLoading(false);
+                        if (User.ROLE_ADMIN.equalsIgnoreCase(role)) {
+                            Toast.makeText(LoginActivity.this, "Administrator access granted.", Toast.LENGTH_SHORT).show();
+                            goToAdminDashboard();
+                        } else {
+                            Toast.makeText(LoginActivity.this, "Welcome back!", Toast.LENGTH_SHORT).show();
+                            goToCustomerHome();
+                        }
+                    }
                 }
             }
 
             @Override
             public void onError(String errorMessage) {
-                // In case of network/permission issue, default safely to customer screen
-                setLoading(false);
-                goToCustomerHome();
+                if (routed.compareAndSet(false, true)) {
+                    handler.removeCallbacks(safetyTimeout);
+                    if (!isFinishing() && !isDestroyed()) {
+                        setLoading(false);
+                        goToCustomerHome();
+                    }
+                }
             }
         });
     }
@@ -164,10 +199,21 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void setLoading(boolean isLoading) {
-        progressBarLogin.setVisibility(isLoading ? View.VISIBLE : View.GONE);
-        btnLogin.setEnabled(!isLoading);
-        etEmail.setEnabled(!isLoading);
-        etPassword.setEnabled(!isLoading);
+        if (shimmerLogin != null) {
+            shimmerLogin.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+            if (isLoading) shimmerLogin.startShimmer();
+            else shimmerLogin.stopShimmer();
+        }
+        if (btnLogin != null) {
+            btnLogin.setVisibility(isLoading ? View.GONE : View.VISIBLE);
+            btnLogin.setEnabled(!isLoading);
+        }
+        if (etEmail != null) {
+            etEmail.setEnabled(!isLoading);
+        }
+        if (etPassword != null) {
+            etPassword.setEnabled(!isLoading);
+        }
     }
 
     private void goToCustomerHome() {

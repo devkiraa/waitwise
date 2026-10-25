@@ -111,6 +111,17 @@
                 android:textColor="@color/ww_text_secondary"
                 android:textSize="12sp" />
 
+            <TextView
+                android:id="@+id/tvTokenPrepTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Est. Prep Time: Pending"
+                android:textColor="@color/ww_primary"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
         </LinearLayout>
 
     </LinearLayout>

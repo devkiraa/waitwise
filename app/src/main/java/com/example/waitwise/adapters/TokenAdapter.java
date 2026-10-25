@@ -68,6 +68,7 @@ public class TokenAdapter extends RecyclerView.Adapter<TokenAdapter.TokenViewHol
         private final TextView tvTokenStatusBadge;
         private final TextView tvTokenItems;
         private final TextView tvTokenTime;
+        private final TextView tvTokenPrepTime;
 
         TokenViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -76,6 +77,7 @@ public class TokenAdapter extends RecyclerView.Adapter<TokenAdapter.TokenViewHol
             tvTokenStatusBadge = itemView.findViewById(R.id.tvTokenStatusBadge);
             tvTokenItems = itemView.findViewById(R.id.tvTokenItems);
             tvTokenTime = itemView.findViewById(R.id.tvTokenTime);
+            tvTokenPrepTime = itemView.findViewById(R.id.tvTokenPrepTime);
         }
 
         void bind(Order order, OnTokenClickListener listener, SimpleDateFormat timeFormat) {
@@ -89,6 +91,14 @@ public class TokenAdapter extends RecyclerView.Adapter<TokenAdapter.TokenViewHol
             // Time string
             String timeStr = order.getCreatedAt() > 0 ? timeFormat.format(new Date(order.getCreatedAt())) : "";
             tvTokenTime.setText("Ordered at " + timeStr + " • " + order.getPaymentMethod());
+
+            String estStr = order.getFormattedPrepTimeEstimate();
+            if (estStr != null && !estStr.isEmpty()) {
+                tvTokenPrepTime.setVisibility(View.VISIBLE);
+                tvTokenPrepTime.setText(estStr);
+            } else {
+                tvTokenPrepTime.setVisibility(View.GONE);
+            }
 
             // Items breakdown
             StringBuilder sb = new StringBuilder();

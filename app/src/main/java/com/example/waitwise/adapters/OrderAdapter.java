@@ -14,6 +14,7 @@ import com.example.waitwise.R;
 import com.example.waitwise.models.Order;
 import com.example.waitwise.models.OrderItem;
 import com.example.waitwise.utils.PriceUtils;
+import com.google.android.material.button.MaterialButton;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -26,6 +27,8 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.OrderViewHol
 
     public interface OnOrderClickListener {
         void onOrderClick(Order order);
+        void onReorder(Order order);
+        void onCancelOrder(Order order);
     }
 
     private final List<Order> orders = new ArrayList<>();
@@ -67,20 +70,26 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.OrderViewHol
         private final TextView tvOrderTokenBadge;
         private final TextView tvOrderStatusBadge;
         private final TextView tvOrderDate;
+        private final TextView tvOrderPrepTime;
         private final TextView tvOrderId;
         private final TextView tvOrderItemsSummary;
         private final TextView tvOrderPaymentDetails;
         private final TextView tvOrderTotal;
+        private final MaterialButton btnCustomerCancelOrder;
+        private final MaterialButton btnReorder;
 
         OrderViewHolder(@NonNull View itemView) {
             super(itemView);
             tvOrderTokenBadge = itemView.findViewById(R.id.tvOrderTokenBadge);
             tvOrderStatusBadge = itemView.findViewById(R.id.tvOrderStatusBadge);
             tvOrderDate = itemView.findViewById(R.id.tvOrderDate);
+            tvOrderPrepTime = itemView.findViewById(R.id.tvOrderPrepTime);
             tvOrderId = itemView.findViewById(R.id.tvOrderId);
             tvOrderItemsSummary = itemView.findViewById(R.id.tvOrderItemsSummary);
             tvOrderPaymentDetails = itemView.findViewById(R.id.tvOrderPaymentDetails);
             tvOrderTotal = itemView.findViewById(R.id.tvOrderTotal);
+            btnCustomerCancelOrder = itemView.findViewById(R.id.btnCustomerCancelOrder);
+            btnReorder = itemView.findViewById(R.id.btnReorder);
         }
 
         void bind(Order order, OnOrderClickListener listener, SimpleDateFormat dateFormat) {
@@ -94,6 +103,15 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.OrderViewHol
             }
 
             tvOrderId.setText("Order ID: " + order.getOrderId());
+
+            String estStr = order.getFormattedPrepTimeEstimate();
+            if (estStr != null && !estStr.isEmpty()) {
+                tvOrderPrepTime.setVisibility(View.VISIBLE);
+                tvOrderPrepTime.setText(estStr);
+            } else {
+                tvOrderPrepTime.setVisibility(View.GONE);
+            }
+
             tvOrderPaymentDetails.setText(order.getPaymentMethod() + " (" + order.getPaymentStatus() + ")");
             tvOrderTotal.setText(PriceUtils.formatPrice(order.getSubtotal()));
 
@@ -114,6 +132,21 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.OrderViewHol
 
             // Status Badge styling
             applyStatusStyle(tvOrderStatusBadge, order.getOrderStatus());
+
+            boolean canCancel = Order.STATUS_PLACED.equalsIgnoreCase(order.getOrderStatus())
+                    || Order.STATUS_ACCEPTED.equalsIgnoreCase(order.getOrderStatus());
+            if (canCancel) {
+                btnCustomerCancelOrder.setVisibility(View.VISIBLE);
+                btnCustomerCancelOrder.setOnClickListener(v -> {
+                    if (listener != null) listener.onCancelOrder(order);
+                });
+            } else {
+                btnCustomerCancelOrder.setVisibility(View.GONE);
+            }
+
+            btnReorder.setOnClickListener(v -> {
+                if (listener != null) listener.onReorder(order);
+            });
 
             itemView.setOnClickListener(v -> {
                 if (listener != null) listener.onOrderClick(order);

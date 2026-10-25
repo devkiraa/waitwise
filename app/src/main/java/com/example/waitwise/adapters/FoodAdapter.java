@@ -3,6 +3,7 @@ package com.example.waitwise.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -17,17 +18,21 @@ import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.imageview.ShapeableImageView;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.FoodViewHolder> {
 
     public interface OnFoodItemClickListener {
         void onAddToCart(FoodItem food);
         void onItemClick(FoodItem food);
+        void onToggleFavorite(FoodItem food, boolean isFavorite);
     }
 
     private final List<FoodItem> items = new ArrayList<>();
+    private final Set<String> favoriteFoodIds = new HashSet<>();
     private final OnFoodItemClickListener listener;
 
     public FoodAdapter(OnFoodItemClickListener listener) {
@@ -38,6 +43,14 @@ public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.FoodViewHolder
         this.items.clear();
         if (newItems != null) {
             this.items.addAll(newItems);
+        }
+        notifyDataSetChanged();
+    }
+
+    public void setFavorites(Set<String> favorites) {
+        this.favoriteFoodIds.clear();
+        if (favorites != null) {
+            this.favoriteFoodIds.addAll(favorites);
         }
         notifyDataSetChanged();
     }
@@ -53,7 +66,7 @@ public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.FoodViewHolder
     @Override
     public void onBindViewHolder(@NonNull FoodViewHolder holder, int position) {
         FoodItem item = items.get(position);
-        holder.bind(item, listener);
+        holder.bind(item, listener, favoriteFoodIds);
     }
 
     @Override
@@ -69,6 +82,7 @@ public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.FoodViewHolder
         private final TextView tvFoodName;
         private final TextView tvFoodDescription;
         private final TextView tvFoodPrice;
+        private final ImageButton btnFavorite;
         private final MaterialButton btnAddToCart;
 
         FoodViewHolder(@NonNull View itemView) {
@@ -80,10 +94,11 @@ public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.FoodViewHolder
             tvFoodName = itemView.findViewById(R.id.tvFoodName);
             tvFoodDescription = itemView.findViewById(R.id.tvFoodDescription);
             tvFoodPrice = itemView.findViewById(R.id.tvFoodPrice);
+            btnFavorite = itemView.findViewById(R.id.btnFavorite);
             btnAddToCart = itemView.findViewById(R.id.btnAddToCart);
         }
 
-        void bind(FoodItem food, OnFoodItemClickListener listener) {
+        void bind(FoodItem food, OnFoodItemClickListener listener, Set<String> favoriteFoodIds) {
             tvFoodName.setText(food.getName());
             tvFoodDescription.setText(food.getDescription());
             tvFoodPrice.setText(PriceUtils.formatPrice(food.getPrice()));
@@ -103,6 +118,15 @@ public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.FoodViewHolder
                 btnAddToCart.setAlpha(0.4f);
                 cardFoodItem.setAlpha(0.6f);
             }
+
+            boolean isFav = favoriteFoodIds != null && favoriteFoodIds.contains(food.getId());
+            btnFavorite.setImageResource(isFav ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
+
+            btnFavorite.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onToggleFavorite(food, !isFav);
+                }
+            });
 
             // Load food image if available
             ImageLoader.getInstance().loadImage(food.getImageUrl(), imgFood, R.drawable.ic_launcher_foreground);

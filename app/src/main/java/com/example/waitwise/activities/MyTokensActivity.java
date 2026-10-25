@@ -2,10 +2,10 @@ package com.example.waitwise.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -16,12 +16,15 @@ import com.example.waitwise.adapters.TokenAdapter;
 import com.example.waitwise.models.Order;
 import com.example.waitwise.repositories.OrderRepository;
 import com.example.waitwise.utils.FirebaseManager;
+import com.example.waitwise.utils.PopupUtils;
+import com.facebook.shimmer.ShimmerFrameLayout;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MyTokensActivity extends AppCompatActivity implements TokenAdapter.OnTokenClickListener {
 
-    private ProgressBar progressBarTokens;
+    private ShimmerFrameLayout shimmerTokens;
     private LinearLayout layoutEmptyTokens;
     private RecyclerView recyclerTokens;
 
@@ -47,11 +50,12 @@ public class MyTokensActivity extends AppCompatActivity implements TokenAdapter.
 
         initializeViews();
         setupRecyclerView();
+        setupNavigation();
         loadTokens();
     }
 
     private void initializeViews() {
-        progressBarTokens = findViewById(R.id.progressBarTokens);
+        shimmerTokens = findViewById(R.id.shimmerTokens);
         layoutEmptyTokens = findViewById(R.id.layoutEmptyTokens);
         recyclerTokens = findViewById(R.id.recyclerTokens);
 
@@ -65,15 +69,65 @@ public class MyTokensActivity extends AppCompatActivity implements TokenAdapter.
         recyclerTokens.setAdapter(tokenAdapter);
     }
 
+    private void setupNavigation() {
+        View navHome = findViewById(R.id.navHome);
+        View navOrders = findViewById(R.id.navOrders);
+        View navProfile = findViewById(R.id.navProfile);
+
+        if (navHome != null) {
+            navHome.setOnClickListener(v -> {
+                Intent intent = new Intent(MyTokensActivity.this, com.example.waitwise.MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+                finish();
+            });
+        }
+        if (navOrders != null) {
+            navOrders.setOnClickListener(v -> {
+                startActivity(new Intent(MyTokensActivity.this, MyOrdersActivity.class));
+                finish();
+            });
+        }
+        if (navProfile != null) {
+            navProfile.setOnClickListener(v -> {
+                startActivity(new Intent(MyTokensActivity.this, ProfileActivity.class));
+                finish();
+            });
+        }
+    }
+
     private void loadTokens() {
-        progressBarTokens.setVisibility(View.VISIBLE);
+        if (shimmerTokens != null) {
+            shimmerTokens.startShimmer();
+            shimmerTokens.setVisibility(View.VISIBLE);
+        }
         layoutEmptyTokens.setVisibility(View.GONE);
         recyclerTokens.setVisibility(View.GONE);
+
+        AtomicBoolean loaded = new AtomicBoolean(false);
+        Handler handler = new Handler(Looper.getMainLooper());
+        Runnable timeoutRunnable = () -> {
+            if (loaded.compareAndSet(false, true)) {
+                if (shimmerTokens != null) {
+                    shimmerTokens.stopShimmer();
+                    shimmerTokens.setVisibility(View.GONE);
+                }
+                layoutEmptyTokens.setVisibility(View.VISIBLE);
+                recyclerTokens.setVisibility(View.GONE);
+            }
+        };
+        handler.postDelayed(timeoutRunnable, 3500);
 
         orderRepository.listenToUserOrders(currentUserId, new OrderRepository.OrdersCallback() {
             @Override
             public void onOrdersLoaded(List<Order> orders) {
-                progressBarTokens.setVisibility(View.GONE);
+                if (loaded.compareAndSet(false, true)) {
+                    handler.removeCallbacks(timeoutRunnable);
+                }
+                if (shimmerTokens != null) {
+                    shimmerTokens.stopShimmer();
+                    shimmerTokens.setVisibility(View.GONE);
+                }
                 if (orders.isEmpty()) {
                     layoutEmptyTokens.setVisibility(View.VISIBLE);
                     recyclerTokens.setVisibility(View.GONE);
@@ -86,15 +140,22 @@ public class MyTokensActivity extends AppCompatActivity implements TokenAdapter.
 
             @Override
             public void onError(String errorMessage) {
-                progressBarTokens.setVisibility(View.GONE);
-                Toast.makeText(MyTokensActivity.this, "Error: " + errorMessage, Toast.LENGTH_SHORT).show();
+                if (loaded.compareAndSet(false, true)) {
+                    handler.removeCallbacks(timeoutRunnable);
+                }
+                if (shimmerTokens != null) {
+                    shimmerTokens.stopShimmer();
+                    shimmerTokens.setVisibility(View.GONE);
+                }
+                layoutEmptyTokens.setVisibility(View.VISIBLE);
+                PopupUtils.showPopup(MyTokensActivity.this, "Error", errorMessage);
             }
         });
     }
 
     @Override
     public void onTokenClick(Order order) {
-        Toast.makeText(this, "Token #" + order.getTokenNumber() + " is currently " + order.getOrderStatus(), Toast.LENGTH_SHORT).show();
+        PopupUtils.showPopup(this, "Token #" + order.getTokenNumber(), "Current Status: " + order.getOrderStatus() + "\nPayment Method: " + order.getPaymentMethod());
     }
 
     @Override

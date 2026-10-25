@@ -3,14 +3,14 @@ package com.example.waitwise.activities;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -25,17 +25,20 @@ import com.example.waitwise.repositories.MenuRepository;
 import com.example.waitwise.repositories.UserRepository;
 import com.example.waitwise.utils.EdgeToEdgeUtils;
 import com.example.waitwise.utils.FirebaseManager;
+import com.example.waitwise.utils.PopupUtils;
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ManageProductsActivity extends AppCompatActivity implements AdminProductAdapter.OnProductAdminListener {
 
     private EditText etSearchAdminProducts;
     private TextView tvAdminProductCount;
-    private ProgressBar progressBarManageProducts;
+    private ShimmerFrameLayout shimmerManageProducts;
     private LinearLayout layoutEmptyAdminProducts;
     private RecyclerView recyclerAdminProducts;
 
@@ -75,7 +78,7 @@ public class ManageProductsActivity extends AppCompatActivity implements AdminPr
             @Override
             public void onRoleLoaded(String role) {
                 if (!User.ROLE_ADMIN.equalsIgnoreCase(role)) {
-                    Toast.makeText(ManageProductsActivity.this, "Access denied.", Toast.LENGTH_SHORT).show();
+                    PopupUtils.showPopup(ManageProductsActivity.this, "Access Denied", "Administrator access required.");
                     finish();
                 }
             }
@@ -101,7 +104,7 @@ public class ManageProductsActivity extends AppCompatActivity implements AdminPr
     private void initializeViews() {
         etSearchAdminProducts = findViewById(R.id.etSearchAdminProducts);
         tvAdminProductCount = findViewById(R.id.tvAdminProductCount);
-        progressBarManageProducts = findViewById(R.id.progressBarManageProducts);
+        shimmerManageProducts = findViewById(R.id.shimmerManageProducts);
         layoutEmptyAdminProducts = findViewById(R.id.layoutEmptyAdminProducts);
         recyclerAdminProducts = findViewById(R.id.recyclerAdminProducts);
 
@@ -173,14 +176,36 @@ public class ManageProductsActivity extends AppCompatActivity implements AdminPr
     }
 
     private void loadProducts() {
-        progressBarManageProducts.setVisibility(View.VISIBLE);
+        if (shimmerManageProducts != null) {
+            shimmerManageProducts.startShimmer();
+            shimmerManageProducts.setVisibility(View.VISIBLE);
+        }
         layoutEmptyAdminProducts.setVisibility(View.GONE);
         recyclerAdminProducts.setVisibility(View.GONE);
+
+        AtomicBoolean loaded = new AtomicBoolean(false);
+        Handler handler = new Handler(Looper.getMainLooper());
+        Runnable timeoutRunnable = () -> {
+            if (loaded.compareAndSet(false, true)) {
+                if (shimmerManageProducts != null) {
+                    shimmerManageProducts.stopShimmer();
+                    shimmerManageProducts.setVisibility(View.GONE);
+                }
+                layoutEmptyAdminProducts.setVisibility(View.VISIBLE);
+            }
+        };
+        handler.postDelayed(timeoutRunnable, 3500);
 
         menuRepository.listenToMenu(new MenuRepository.MenuCallback() {
             @Override
             public void onMenuLoaded(List<FoodItem> items) {
-                progressBarManageProducts.setVisibility(View.GONE);
+                if (loaded.compareAndSet(false, true)) {
+                    handler.removeCallbacks(timeoutRunnable);
+                }
+                if (shimmerManageProducts != null) {
+                    shimmerManageProducts.stopShimmer();
+                    shimmerManageProducts.setVisibility(View.GONE);
+                }
                 allProducts.clear();
                 allProducts.addAll(items);
                 filterProducts();
@@ -188,8 +213,15 @@ public class ManageProductsActivity extends AppCompatActivity implements AdminPr
 
             @Override
             public void onError(String errorMessage) {
-                progressBarManageProducts.setVisibility(View.GONE);
-                Toast.makeText(ManageProductsActivity.this, "Error loading menu: " + errorMessage, Toast.LENGTH_SHORT).show();
+                if (loaded.compareAndSet(false, true)) {
+                    handler.removeCallbacks(timeoutRunnable);
+                }
+                if (shimmerManageProducts != null) {
+                    shimmerManageProducts.stopShimmer();
+                    shimmerManageProducts.setVisibility(View.GONE);
+                }
+                layoutEmptyAdminProducts.setVisibility(View.VISIBLE);
+                PopupUtils.showPopup(ManageProductsActivity.this, "Menu Error", errorMessage);
             }
         });
     }
@@ -240,12 +272,12 @@ public class ManageProductsActivity extends AppCompatActivity implements AdminPr
                     menuRepository.deleteProduct(item.getId(), new MenuRepository.ActionCallback() {
                         @Override
                         public void onSuccess() {
-                            Toast.makeText(ManageProductsActivity.this, "Product removed from menu.", Toast.LENGTH_SHORT).show();
+                            PopupUtils.showPopup(ManageProductsActivity.this, "Product Deleted", "'" + item.getName() + "' was removed from the menu.");
                         }
 
                         @Override
                         public void onError(String errorMessage) {
-                            Toast.makeText(ManageProductsActivity.this, "Failed to delete: " + errorMessage, Toast.LENGTH_SHORT).show();
+                            PopupUtils.showPopup(ManageProductsActivity.this, "Delete Error", errorMessage);
                         }
                     });
                 })
@@ -258,13 +290,13 @@ public class ManageProductsActivity extends AppCompatActivity implements AdminPr
         menuRepository.toggleProductAvailability(item.getId(), newAvailable, new MenuRepository.ActionCallback() {
             @Override
             public void onSuccess() {
-                String status = newAvailable ? "available" : "unavailable";
-                Toast.makeText(ManageProductsActivity.this, item.getName() + " is now " + status, Toast.LENGTH_SHORT).show();
+                String status = newAvailable ? "available for ordering" : "marked as unavailable/sold out";
+                PopupUtils.showPopup(ManageProductsActivity.this, "Stock Updated", item.getName() + " is now " + status + ".");
             }
 
             @Override
             public void onError(String errorMessage) {
-                Toast.makeText(ManageProductsActivity.this, "Update failed: " + errorMessage, Toast.LENGTH_SHORT).show();
+                PopupUtils.showPopup(ManageProductsActivity.this, "Update Error", errorMessage);
             }
         });
     }

@@ -27,6 +27,8 @@ public class Order implements Serializable {
     private String paymentMethod;
     private String paymentStatus;
     private String orderStatus;
+    private int estimatedPrepTimeMinutes;
+    private long estimatedReadyAt;
     private long createdAt;
 
     public Order() {
@@ -108,6 +110,42 @@ public class Order implements Serializable {
 
     public void setOrderStatus(String orderStatus) {
         this.orderStatus = orderStatus;
+    }
+
+    public int getEstimatedPrepTimeMinutes() {
+        return estimatedPrepTimeMinutes;
+    }
+
+    public void setEstimatedPrepTimeMinutes(int estimatedPrepTimeMinutes) {
+        this.estimatedPrepTimeMinutes = estimatedPrepTimeMinutes;
+    }
+
+    public long getEstimatedReadyAt() {
+        return estimatedReadyAt;
+    }
+
+    public void setEstimatedReadyAt(long estimatedReadyAt) {
+        this.estimatedReadyAt = estimatedReadyAt;
+    }
+
+    public String getFormattedPrepTimeEstimate() {
+        if (STATUS_READY.equalsIgnoreCase(orderStatus)
+                || STATUS_COLLECTED.equalsIgnoreCase(orderStatus)
+                || STATUS_CANCELLED.equalsIgnoreCase(orderStatus)) {
+            return "";
+        }
+
+        if (estimatedPrepTimeMinutes <= 0 || estimatedReadyAt <= 0) {
+            return "Est. Prep Time: Pending";
+        }
+
+        long diffMs = estimatedReadyAt - System.currentTimeMillis();
+        if (diffMs > 0) {
+            int remainingMins = (int) Math.ceil(diffMs / 60000.0);
+            return "Est. Ready in ~" + remainingMins + " min" + (remainingMins == 1 ? "" : "s");
+        } else {
+            return "Est. Ready soon (Finishing up)";
+        }
     }
 
     public long getCreatedAt() {

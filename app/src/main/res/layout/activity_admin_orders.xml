@@ -46,11 +46,41 @@
         android:paddingStart="18dp"
         android:paddingEnd="18dp">
 
+        <!-- Search Token / Order ID -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="4dp"
+            app:boxBackgroundColor="@color/ww_surface"
+            app:boxBackgroundMode="outline"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxStrokeColor="@color/ww_border"
+            app:boxStrokeWidth="1dp"
+            app:hintEnabled="false"
+            app:startIconDrawable="@android:drawable/ic_menu_search"
+            app:startIconTint="@color/ww_text_secondary">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etSearchAdminOrders"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:hint="Search Token #, Order ID or item..."
+                android:paddingTop="0dp"
+                android:paddingBottom="0dp"
+                android:singleLine="true"
+                android:textColor="@color/ww_text_primary"
+                android:textSize="13sp" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
         <!-- Status Filter Buttons -->
         <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="8dp"
             android:scrollbars="none">
 
             <LinearLayout
@@ -126,12 +156,27 @@
         android:layout_marginTop="8dp"
         android:layout_weight="1">
 
-        <ProgressBar
-            android:id="@+id/progressBarAdminOrders"
-            android:layout_width="wrap_content"
+        <com.facebook.shimmer.ShimmerFrameLayout
+            android:id="@+id/shimmerAdminOrders"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:indeterminateTint="@color/ww_primary" />
+            android:paddingStart="18dp"
+            android:paddingTop="4dp"
+            android:paddingEnd="18dp"
+            app:shimmer_auto_start="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <include layout="@layout/item_skeleton_order" />
+                <include layout="@layout/item_skeleton_order" />
+                <include layout="@layout/item_skeleton_order" />
+
+            </LinearLayout>
+
+        </com.facebook.shimmer.ShimmerFrameLayout>
 
         <!-- Empty State -->
         <LinearLayout

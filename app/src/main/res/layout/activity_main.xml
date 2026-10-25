@@ -9,6 +9,7 @@
 
     <!-- Main scrollable content -->
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/nestedScrollViewMain"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
@@ -157,6 +158,18 @@
                         app:cornerRadius="12dp" />
 
                     <com.google.android.material.button.MaterialButton
+                        android:id="@+id/categoryFavorites"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="8dp"
+                        android:text="♥ Favorites"
+                        android:textSize="13sp"
+                        android:textColor="@color/ww_text_primary"
+                        app:cornerRadius="12dp"
+                        app:strokeColor="@color/ww_border" />
+
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/categoryBreakfast"
                         style="@style/Widget.Material3.Button.OutlinedButton"
                         android:layout_width="wrap_content"
@@ -235,14 +248,26 @@
 
             </LinearLayout>
 
-            <!-- Loading indicator -->
-            <ProgressBar
-                android:id="@+id/progressBarMenu"
-                android:layout_width="wrap_content"
+            <!-- Skeleton loading layout -->
+            <com.facebook.shimmer.ShimmerFrameLayout
+                android:id="@+id/shimmerMenu"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginTop="32dp"
-                android:indeterminateTint="@color/ww_primary" />
+                android:layout_marginTop="16dp"
+                app:shimmer_auto_start="true">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <include layout="@layout/item_skeleton_food" />
+                    <include layout="@layout/item_skeleton_food" />
+                    <include layout="@layout/item_skeleton_food" />
+
+                </LinearLayout>
+
+            </com.facebook.shimmer.ShimmerFrameLayout>
 
             <!-- Empty / Error State -->
             <LinearLayout
@@ -303,50 +328,106 @@
         android:layout_width="match_parent"
         android:layout_height="64dp"
         android:background="@color/ww_surface"
+        android:elevation="4dp"
         android:gravity="center"
-        android:orientation="horizontal"
-        android:elevation="4dp">
+        android:orientation="horizontal">
 
-        <TextView
+        <LinearLayout
             android:id="@+id/navHome"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:gravity="center"
-            android:text="Home"
-            android:textColor="@color/ww_primary"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+            android:orientation="vertical">
 
-        <TextView
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_nav_home"
+                app:tint="@color/ww_primary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Home"
+                android:textColor="@color/ww_primary"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <LinearLayout
             android:id="@+id/navOrders"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:gravity="center"
-            android:text="My Orders"
-            android:textColor="@color/ww_text_secondary"
-            android:textSize="12sp" />
+            android:orientation="vertical">
 
-        <TextView
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_nav_orders"
+                app:tint="@color/ww_text_secondary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="My Orders"
+                android:textColor="@color/ww_text_secondary"
+                android:textSize="11sp" />
+
+        </LinearLayout>
+
+        <LinearLayout
             android:id="@+id/navTokens"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:gravity="center"
-            android:text="My Tokens"
-            android:textColor="@color/ww_text_secondary"
-            android:textSize="12sp" />
+            android:orientation="vertical">
 
-        <TextView
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_nav_tokens"
+                app:tint="@color/ww_text_secondary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="My Tokens"
+                android:textColor="@color/ww_text_secondary"
+                android:textSize="11sp" />
+
+        </LinearLayout>
+
+        <LinearLayout
             android:id="@+id/navProfile"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:gravity="center"
-            android:text="Profile"
-            android:textColor="@color/ww_text_secondary"
-            android:textSize="12sp" />
+            android:orientation="vertical">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_nav_profile"
+                app:tint="@color/ww_text_secondary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Profile"
+                android:textColor="@color/ww_text_secondary"
+                android:textSize="11sp" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

@@ -69,6 +69,30 @@ public class MenuRepository {
         menuRef.addValueEventListener(menuListener);
     }
 
+    public void getMenuOnce(@NonNull MenuCallback callback) {
+        menuRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<FoodItem> items = new ArrayList<>();
+                for (DataSnapshot itemSnapshot : snapshot.getChildren()) {
+                    FoodItem food = itemSnapshot.getValue(FoodItem.class);
+                    if (food != null) {
+                        if (food.getId() == null || food.getId().isEmpty()) {
+                            food.setId(itemSnapshot.getKey());
+                        }
+                        items.add(food);
+                    }
+                }
+                callback.onMenuLoaded(items);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                callback.onError(error.getMessage());
+            }
+        });
+    }
+
     /**
      * Detaches the listener to prevent memory leaks when the Activity/View is destroyed.
      */

@@ -1,0 +1,18 @@
+{
+  "name": "waitwise-scripts",
+  "version": "1.0.0",
+  "description": "Seeding and maintenance scripts for WaitWise Firebase Realtime Database",
+  "main": "seed-menu.js",
+  "type": "commonjs",
+  "scripts": {
+    "seed:dry-run": "node seed-menu.js --dry-run",
+    "seed:apply": "node seed-menu.js --apply"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "private": true
+}

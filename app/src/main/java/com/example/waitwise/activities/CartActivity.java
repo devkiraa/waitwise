@@ -2,11 +2,11 @@ package com.example.waitwise.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -20,7 +20,9 @@ import com.example.waitwise.repositories.CartRepository;
 import com.example.waitwise.repositories.MenuRepository;
 import com.example.waitwise.utils.EdgeToEdgeUtils;
 import com.example.waitwise.utils.FirebaseManager;
+import com.example.waitwise.utils.PopupUtils;
 import com.example.waitwise.utils.PriceUtils;
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 
@@ -28,10 +30,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CartActivity extends AppCompatActivity implements CartAdapter.CartItemListener {
 
-    private ProgressBar progressBarCart;
+    private ShimmerFrameLayout shimmerCart;
     private LinearLayout layoutEmptyCart;
     private RecyclerView recyclerCart;
     private MaterialCardView cardCheckoutSummary;
@@ -71,7 +74,7 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.CartI
     }
 
     private void initializeViews() {
-        progressBarCart = findViewById(R.id.progressBarCart);
+        shimmerCart = findViewById(R.id.shimmerCart);
         layoutEmptyCart = findViewById(R.id.layoutEmptyCart);
         recyclerCart = findViewById(R.id.recyclerCart);
         cardCheckoutSummary = findViewById(R.id.cardCheckoutSummary);
@@ -87,19 +90,19 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.CartI
             cartRepository.clearCart(currentUserId, new CartRepository.CartActionCallback() {
                 @Override
                 public void onSuccess() {
-                    Toast.makeText(CartActivity.this, "Cart cleared", Toast.LENGTH_SHORT).show();
+                    PopupUtils.showPopup(CartActivity.this, "Cart Cleared", "All items have been removed from your cart.");
                 }
 
                 @Override
                 public void onError(String errorMessage) {
-                    Toast.makeText(CartActivity.this, "Failed to clear cart: " + errorMessage, Toast.LENGTH_SHORT).show();
+                    PopupUtils.showPopup(CartActivity.this, "Error", "Failed to clear cart: " + errorMessage);
                 }
             });
         });
 
         btnProceedCheckout.setOnClickListener(v -> {
             if (cartItems.isEmpty()) {
-                Toast.makeText(this, "Your cart is empty", Toast.LENGTH_SHORT).show();
+                PopupUtils.showPopup(this, "Empty Cart", "Your cart is currently empty.");
                 return;
             }
             Intent intent = new Intent(CartActivity.this, CheckoutActivity.class);
@@ -114,7 +117,23 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.CartI
     }
 
     private void loadMenuAndCart() {
-        progressBarCart.setVisibility(View.VISIBLE);
+        if (shimmerCart != null) {
+            shimmerCart.startShimmer();
+            shimmerCart.setVisibility(View.VISIBLE);
+        }
+
+        AtomicBoolean loaded = new AtomicBoolean(false);
+        Handler handler = new Handler(Looper.getMainLooper());
+        Runnable timeoutRunnable = () -> {
+            if (loaded.compareAndSet(false, true)) {
+                if (shimmerCart != null) {
+                    shimmerCart.stopShimmer();
+                    shimmerCart.setVisibility(View.GONE);
+                }
+                updateUI();
+            }
+        };
+        handler.postDelayed(timeoutRunnable, 3500);
 
         menuRepository.listenToMenu(new MenuRepository.MenuCallback() {
             @Override
@@ -127,7 +146,13 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.CartI
                 cartRepository.listenToUserCart(currentUserId, new CartRepository.CartCallback() {
                     @Override
                     public void onCartLoaded(List<CartItem> items) {
-                        progressBarCart.setVisibility(View.GONE);
+                        if (loaded.compareAndSet(false, true)) {
+                            handler.removeCallbacks(timeoutRunnable);
+                        }
+                        if (shimmerCart != null) {
+                            shimmerCart.stopShimmer();
+                            shimmerCart.setVisibility(View.GONE);
+                        }
                         cartItems.clear();
 
                         double subtotal = 0.0;
@@ -147,16 +172,30 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.CartI
 
                     @Override
                     public void onError(String errorMessage) {
-                        progressBarCart.setVisibility(View.GONE);
-                        Toast.makeText(CartActivity.this, "Cart error: " + errorMessage, Toast.LENGTH_SHORT).show();
+                        if (loaded.compareAndSet(false, true)) {
+                            handler.removeCallbacks(timeoutRunnable);
+                        }
+                        if (shimmerCart != null) {
+                            shimmerCart.stopShimmer();
+                            shimmerCart.setVisibility(View.GONE);
+                        }
+                        updateUI();
+                        PopupUtils.showPopup(CartActivity.this, "Cart Error", errorMessage);
                     }
                 });
             }
 
             @Override
             public void onError(String errorMessage) {
-                progressBarCart.setVisibility(View.GONE);
-                Toast.makeText(CartActivity.this, "Menu error: " + errorMessage, Toast.LENGTH_SHORT).show();
+                if (loaded.compareAndSet(false, true)) {
+                    handler.removeCallbacks(timeoutRunnable);
+                }
+                if (shimmerCart != null) {
+                    shimmerCart.stopShimmer();
+                    shimmerCart.setVisibility(View.GONE);
+                }
+                updateUI();
+                PopupUtils.showPopup(CartActivity.this, "Menu Error", errorMessage);
             }
         });
     }

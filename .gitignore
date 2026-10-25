@@ -13,3 +13,12 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Service Account Keys & Firebase Secrets
+*-service-account*.json
+*serviceAccount*.json
+service-account.json
+serviceAccountKey.json
+*.pem
+*.key
+node_modules/

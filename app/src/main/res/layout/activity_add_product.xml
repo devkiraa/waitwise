@@ -286,14 +286,20 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <ProgressBar
-            android:id="@+id/progressBarAddProduct"
-            android:layout_width="wrap_content"
+        <com.facebook.shimmer.ShimmerFrameLayout
+            android:id="@+id/shimmerAddProduct"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
             android:layout_marginTop="16dp"
-            android:indeterminateTint="@color/ww_primary"
-            android:visibility="gone" />
+            android:visibility="gone"
+            app:shimmer_auto_start="true">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="@drawable/bg_skeleton_placeholder" />
+
+        </com.facebook.shimmer.ShimmerFrameLayout>
 
         <!-- Buttons -->
         <com.google.android.material.button.MaterialButton

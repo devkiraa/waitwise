@@ -108,12 +108,12 @@ public class AdminTokenAdapter extends RecyclerView.Adapter<AdminTokenAdapter.Ad
 
             if (Order.STATUS_READY.equalsIgnoreCase(currentStatus)) {
                 targetStatus = Order.STATUS_COLLECTED;
-                buttonLabel = "Handover to Customer (Mark Collected)";
+                buttonLabel = "Mark Collected";
             } else if (Order.STATUS_PLACED.equalsIgnoreCase(currentStatus)
                     || Order.STATUS_ACCEPTED.equalsIgnoreCase(currentStatus)
                     || Order.STATUS_PREPARING.equalsIgnoreCase(currentStatus)) {
                 targetStatus = Order.STATUS_READY;
-                buttonLabel = "Call Token / Mark Ready";
+                buttonLabel = "Mark Ready for Pickup";
             }
 
             if (targetStatus != null) {

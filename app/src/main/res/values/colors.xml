@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ww_primary">#246B4A</color>
-    <color name="ww_primary_dark">#174B33</color>
+    <color name="ww_primary">#22704E</color>
+    <color name="ww_primary_dark">#165036</color>
+    <color name="ww_primary_light">#EAF3EE</color>
     <color name="ww_background">#FAF9F6</color>
     <color name="ww_surface">#FFFFFF</color>
-    <color name="ww_text_primary">#202421</color>
-    <color name="ww_text_secondary">#777D78</color>
-    <color name="ww_border">#E7E8E3</color>
-    <color name="ww_success">#2E7D52</color>
-    <color name="ww_error">#BA3333</color>
+    <color name="ww_text_primary">#1D211E</color>
+    <color name="ww_text_secondary">#6E736E</color>
+    <color name="ww_border">#E4E6DF</color>
+    <color name="ww_success">#287A4F</color>
+    <color name="ww_error">#C0392B</color>
 </resources>

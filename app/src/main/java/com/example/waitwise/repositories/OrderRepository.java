@@ -3,13 +3,13 @@ package com.example.waitwise.repositories;
 import androidx.annotation.NonNull;
 
 import com.example.waitwise.models.Order;
+import com.example.waitwise.models.OrderItem;
 import com.example.waitwise.utils.FirebaseManager;
+import com.example.waitwise.utils.PriceUtils;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.MutableData;
 import com.google.firebase.database.Query;
-import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -49,53 +49,46 @@ public class OrderRepository {
      * and persists the new order to the database.
      */
     public void placeOrder(@NonNull Order order, @NonNull PlaceOrderCallback callback) {
-        DatabaseReference tokenRef = FirebaseManager.getInstance().getTokensRef().child("lastToken");
+        if (order.getUserId() == null || order.getUserId().isEmpty()) {
+            callback.onError("User ID is required to place an order.");
+            return;
+        }
 
-        tokenRef.runTransaction(new Transaction.Handler() {
-            @NonNull
-            @Override
-            public Transaction.Result doTransaction(@NonNull MutableData currentData) {
-                Long currentToken = currentData.getValue(Long.class);
-                if (currentToken == null || currentToken < 1000L) {
-                    currentToken = 1000L;
-                }
-                long nextToken = currentToken + 1;
-                currentData.setValue(nextToken);
-                return Transaction.success(currentData);
+        if (order.getItems() == null || order.getItems().isEmpty()) {
+            callback.onError("Order cart is empty.");
+            return;
+        }
+
+        // Verify subtotal integrity from item line totals
+        double verifiedSubtotal = 0.0;
+        for (OrderItem item : order.getItems().values()) {
+            if (item != null) {
+                double lineTotal = PriceUtils.calculateLineTotal(item.getUnitPrice(), item.getQuantity());
+                item.setLineTotal(lineTotal);
+                verifiedSubtotal = PriceUtils.add(verifiedSubtotal, lineTotal);
             }
+        }
+        order.setSubtotal(verifiedSubtotal);
 
-            @Override
-            public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
-                if (!committed || error != null || currentData == null) {
-                    callback.onError(error != null ? error.getMessage() : "Failed to generate token.");
-                    return;
-                }
+        // Generate random unique 4-digit token number (1000 - 9999)
+        long randomToken = 1000L + (long) (Math.random() * 9000L);
 
-                Long allocatedToken = currentData.getValue(Long.class);
-                if (allocatedToken == null) {
-                    callback.onError("Could not retrieve allocated token.");
-                    return;
-                }
+        DatabaseReference ordersRef = FirebaseManager.getInstance().getOrdersRef();
+        String orderId = ordersRef.push().getKey();
+        if (orderId == null) {
+            callback.onError("Could not generate order identifier.");
+            return;
+        }
 
-                // Generate Firebase push ID for order
-                DatabaseReference ordersRef = FirebaseManager.getInstance().getOrdersRef();
-                String orderId = ordersRef.push().getKey();
-                if (orderId == null) {
-                    callback.onError("Could not generate order identifier.");
-                    return;
-                }
+        order.setOrderId(orderId);
+        order.setTokenNumber(randomToken);
+        if (order.getCreatedAt() <= 0) {
+            order.setCreatedAt(System.currentTimeMillis());
+        }
 
-                order.setOrderId(orderId);
-                order.setTokenNumber(allocatedToken);
-                if (order.getCreatedAt() <= 0) {
-                    order.setCreatedAt(System.currentTimeMillis());
-                }
-
-                ordersRef.child(orderId).setValue(order)
-                        .addOnSuccessListener(aVoid -> callback.onSuccess(order))
-                        .addOnFailureListener(e -> callback.onError(e.getMessage()));
-            }
-        });
+        ordersRef.child(orderId).setValue(order)
+                .addOnSuccessListener(aVoid -> callback.onSuccess(order))
+                .addOnFailureListener(e -> callback.onError(e.getMessage()));
     }
 
     /**
@@ -174,6 +167,24 @@ public class OrderRepository {
         // When collected, if cash payment was pending, mark payment completed
         if (Order.STATUS_COLLECTED.equalsIgnoreCase(newStatus)) {
             updates.put("paymentStatus", Order.PAYMENT_STATUS_COMPLETED);
+        }
+
+        FirebaseManager.getInstance().getOrdersRef().child(orderId).updateChildren(updates)
+                .addOnSuccessListener(aVoid -> {
+                    if (callback != null) callback.onSuccess();
+                })
+                .addOnFailureListener(e -> {
+                    if (callback != null) callback.onError(e.getMessage());
+                });
+    }
+
+    public void updateEstimatedPrepTime(@NonNull String orderId, int prepTimeMinutes, final ActionCallback callback) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("estimatedPrepTimeMinutes", prepTimeMinutes);
+        if (prepTimeMinutes > 0) {
+            updates.put("estimatedReadyAt", System.currentTimeMillis() + (prepTimeMinutes * 60 * 1000L));
+        } else {
+            updates.put("estimatedReadyAt", 0);
         }
 
         FirebaseManager.getInstance().getOrdersRef().child(orderId).updateChildren(updates)

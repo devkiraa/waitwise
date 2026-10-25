@@ -216,16 +216,6 @@
                             android:textColor="@color/ww_text_primary"
                             android:textSize="14sp" />
 
-                        <RadioButton
-                            android:id="@+id/rbCard"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:paddingStart="8dp"
-                            android:text="Debit/Credit Card [Demonstration / Mock]"
-                            android:textColor="@color/ww_text_primary"
-                            android:textSize="14sp" />
-
                     </RadioGroup>
 
                     <TextView
@@ -235,7 +225,7 @@
                         android:layout_marginTop="8dp"
                         android:background="#FFF9E6"
                         android:padding="8dp"
-                        android:text="Note: UPI and Card options are demonstration mocks. No real funds are debited."
+                        android:text="Note: UPI option is a demonstration mock. No real funds are debited."
                         android:textColor="#855A00"
                         android:textSize="11sp" />
 
@@ -243,14 +233,20 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <ProgressBar
-                android:id="@+id/progressBarCheckout"
-                android:layout_width="wrap_content"
+            <com.facebook.shimmer.ShimmerFrameLayout
+                android:id="@+id/shimmerCheckout"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
                 android:layout_marginTop="18dp"
-                android:indeterminateTint="@color/ww_primary"
-                android:visibility="gone" />
+                android:visibility="gone"
+                app:shimmer_auto_start="true">
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="54dp"
+                    android:background="@drawable/bg_skeleton_placeholder" />
+
+            </com.facebook.shimmer.ShimmerFrameLayout>
 
             <!-- Place Order Button -->
             <com.google.android.material.button.MaterialButton

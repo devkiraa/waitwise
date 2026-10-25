@@ -16,19 +16,31 @@
         ".write": "auth != null && auth.uid === $uid"
       }
     },
+    "favorites": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "notifications": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
     "orders": {
-      ".read": "auth != null",
+      ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || (query.orderByChild === 'userId' && query.equalTo === auth.uid))",
       ".indexOn": ["userId", "createdAt", "orderStatus"],
       "$orderId": {
         ".read": "auth != null && (data.child('userId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin')",
-        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || (!data.exists() && newData.child('userId').val() === auth.uid && newData.child('orderStatus').val() === 'PLACED'))",
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || (!data.exists() && newData.child('userId').val() === auth.uid && newData.child('orderStatus').val() === 'PLACED') || (data.exists() && data.child('userId').val() === auth.uid && (data.child('orderStatus').val() === 'PLACED' || data.child('orderStatus').val() === 'ACCEPTED') && newData.child('orderStatus').val() === 'CANCELLED' && newData.child('userId').val() === data.child('userId').val() && newData.child('tokenNumber').val() === data.child('tokenNumber').val() && newData.child('subtotal').val() === data.child('subtotal').val()))",
         ".validate": "newData.hasChildren(['userId', 'tokenNumber', 'subtotal', 'paymentMethod', 'orderStatus', 'createdAt'])"
       }
     },
     "tokens": {
       "lastToken": {
         ".read": "auth != null",
-        ".write": "auth != null"
+        ".write": "auth != null && newData.isNumber() && newData.val() >= 1000"
       }
     }
   }

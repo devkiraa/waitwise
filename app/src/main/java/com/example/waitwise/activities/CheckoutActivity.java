@@ -4,11 +4,9 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -22,7 +20,9 @@ import com.example.waitwise.repositories.CartRepository;
 import com.example.waitwise.repositories.MenuRepository;
 import com.example.waitwise.repositories.OrderRepository;
 import com.example.waitwise.utils.FirebaseManager;
+import com.example.waitwise.utils.PopupUtils;
 import com.example.waitwise.utils.PriceUtils;
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
@@ -35,10 +35,8 @@ public class CheckoutActivity extends AppCompatActivity {
     private LinearLayout layoutOrderItemsContainer;
     private TextView tvCheckoutSubtotal;
     private RadioGroup radioGroupPayment;
-    private RadioButton rbCash;
     private RadioButton rbUpi;
-    private RadioButton rbCard;
-    private ProgressBar progressBarCheckout;
+    private ShimmerFrameLayout shimmerCheckout;
     private MaterialButton btnPlaceOrder;
 
     private CartRepository cartRepository;
@@ -77,10 +75,8 @@ public class CheckoutActivity extends AppCompatActivity {
         layoutOrderItemsContainer = findViewById(R.id.layoutOrderItemsContainer);
         tvCheckoutSubtotal = findViewById(R.id.tvCheckoutSubtotal);
         radioGroupPayment = findViewById(R.id.radioGroupPayment);
-        rbCash = findViewById(R.id.rbCash);
         rbUpi = findViewById(R.id.rbUpi);
-        rbCard = findViewById(R.id.rbCard);
-        progressBarCheckout = findViewById(R.id.progressBarCheckout);
+        shimmerCheckout = findViewById(R.id.shimmerCheckout);
         btnPlaceOrder = findViewById(R.id.btnPlaceOrder);
 
         findViewById(R.id.btnBackCheckout).setOnClickListener(v -> finish());
@@ -89,9 +85,6 @@ public class CheckoutActivity extends AppCompatActivity {
             if (checkedId == R.id.rbUpi) {
                 showMockPaymentInfo("UPI Demonstration",
                         "This is a demonstration interface for project presentation. No UPI transactions will be executed.");
-            } else if (checkedId == R.id.rbCard) {
-                showMockPaymentInfo("Card Demonstration",
-                        "This is a demonstration interface for project presentation. No card details are required or charged.");
             }
         });
 
@@ -107,7 +100,10 @@ public class CheckoutActivity extends AppCompatActivity {
     }
 
     private void loadOrderData() {
-        progressBarCheckout.setVisibility(View.VISIBLE);
+        if (shimmerCheckout != null) {
+            shimmerCheckout.startShimmer();
+            shimmerCheckout.setVisibility(View.VISIBLE);
+        }
         btnPlaceOrder.setEnabled(false);
 
         menuRepository.listenToMenu(new MenuRepository.MenuCallback() {
@@ -121,7 +117,10 @@ public class CheckoutActivity extends AppCompatActivity {
                 cartRepository.listenToUserCart(currentUserId, new CartRepository.CartCallback() {
                     @Override
                     public void onCartLoaded(List<CartItem> items) {
-                        progressBarCheckout.setVisibility(View.GONE);
+                        if (shimmerCheckout != null) {
+                            shimmerCheckout.stopShimmer();
+                            shimmerCheckout.setVisibility(View.GONE);
+                        }
                         btnPlaceOrder.setEnabled(true);
 
                         cartItems.clear();
@@ -131,16 +130,22 @@ public class CheckoutActivity extends AppCompatActivity {
 
                     @Override
                     public void onError(String errorMessage) {
-                        progressBarCheckout.setVisibility(View.GONE);
-                        Toast.makeText(CheckoutActivity.this, "Cart error: " + errorMessage, Toast.LENGTH_SHORT).show();
+                        if (shimmerCheckout != null) {
+                            shimmerCheckout.stopShimmer();
+                            shimmerCheckout.setVisibility(View.GONE);
+                        }
+                        PopupUtils.showPopup(CheckoutActivity.this, "Cart Error", errorMessage);
                     }
                 });
             }
 
             @Override
             public void onError(String errorMessage) {
-                progressBarCheckout.setVisibility(View.GONE);
-                Toast.makeText(CheckoutActivity.this, "Menu error: " + errorMessage, Toast.LENGTH_SHORT).show();
+                if (shimmerCheckout != null) {
+                    shimmerCheckout.stopShimmer();
+                    shimmerCheckout.setVisibility(View.GONE);
+                }
+                PopupUtils.showPopup(CheckoutActivity.this, "Menu Error", errorMessage);
             }
         });
     }
@@ -150,7 +155,7 @@ public class CheckoutActivity extends AppCompatActivity {
         calculatedSubtotal = 0.0;
 
         if (cartItems.isEmpty()) {
-            Toast.makeText(this, "Your cart is empty", Toast.LENGTH_SHORT).show();
+            PopupUtils.showPopup(this, "Empty Cart", "Your cart is currently empty.");
             finish();
             return;
         }
@@ -189,7 +194,7 @@ public class CheckoutActivity extends AppCompatActivity {
         if (isPlacingOrder) return;
 
         if (cartItems.isEmpty()) {
-            Toast.makeText(this, "Cannot place order: Cart is empty", Toast.LENGTH_SHORT).show();
+            PopupUtils.showPopup(this, "Empty Cart", "Cannot place order: Cart is empty.");
             return;
         }
 
@@ -200,11 +205,11 @@ public class CheckoutActivity extends AppCompatActivity {
         for (CartItem ci : cartItems) {
             FoodItem food = menuMap.get(ci.getFoodId());
             if (food == null) {
-                Toast.makeText(this, "Item " + ci.getFoodId() + " no longer exists in menu.", Toast.LENGTH_LONG).show();
+                PopupUtils.showPopup(this, "Item Missing", "Item " + ci.getFoodId() + " no longer exists in menu.");
                 return;
             }
             if (!food.isAvailable()) {
-                Toast.makeText(this, food.getName() + " is currently unavailable. Please remove it from cart.", Toast.LENGTH_LONG).show();
+                PopupUtils.showPopup(this, "Item Unavailable", food.getName() + " is currently unavailable. Please remove it from cart.");
                 return;
             }
 
@@ -222,14 +227,15 @@ public class CheckoutActivity extends AppCompatActivity {
         }
 
         String paymentMethod = Order.PAYMENT_CASH;
-        if (rbUpi.isChecked()) {
+        if (rbUpi != null && rbUpi.isChecked()) {
             paymentMethod = Order.PAYMENT_UPI_DEMO;
-        } else if (rbCard.isChecked()) {
-            paymentMethod = Order.PAYMENT_CARD_DEMO;
         }
 
         isPlacingOrder = true;
-        progressBarCheckout.setVisibility(View.VISIBLE);
+        if (shimmerCheckout != null) {
+            shimmerCheckout.startShimmer();
+            shimmerCheckout.setVisibility(View.VISIBLE);
+        }
         btnPlaceOrder.setEnabled(false);
 
         Order newOrder = new Order();
@@ -248,7 +254,10 @@ public class CheckoutActivity extends AppCompatActivity {
                 cartRepository.clearCart(currentUserId, null);
 
                 isPlacingOrder = false;
-                progressBarCheckout.setVisibility(View.GONE);
+                if (shimmerCheckout != null) {
+                    shimmerCheckout.stopShimmer();
+                    shimmerCheckout.setVisibility(View.GONE);
+                }
 
                 Intent intent = new Intent(CheckoutActivity.this, OrderConfirmationActivity.class);
                 intent.putExtra("order", createdOrder);
@@ -260,9 +269,12 @@ public class CheckoutActivity extends AppCompatActivity {
             @Override
             public void onError(String errorMessage) {
                 isPlacingOrder = false;
-                progressBarCheckout.setVisibility(View.GONE);
+                if (shimmerCheckout != null) {
+                    shimmerCheckout.stopShimmer();
+                    shimmerCheckout.setVisibility(View.GONE);
+                }
                 btnPlaceOrder.setEnabled(true);
-                Toast.makeText(CheckoutActivity.this, "Order failed: " + errorMessage, Toast.LENGTH_LONG).show();
+                PopupUtils.showPopup(CheckoutActivity.this, "Order Failed", errorMessage);
             }
         });
     }

@@ -1,7 +1,18 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
     <style name="Base.Theme.WaitWise" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        <item name="colorPrimary">@color/ww_primary</item>
+        <item name="colorOnPrimary">@color/ww_surface</item>
+        <item name="colorSecondary">@color/ww_primary</item>
+        <item name="colorOnSecondary">@color/ww_surface</item>
+
+        <item name="android:colorAccent">@color/ww_primary</item>
+        <item name="android:statusBarColor">@color/ww_background</item>
+        <item name="android:navigationBarColor">@color/ww_background</item>
+
+        <item name="android:fontFamily">@font/plus_jakarta_sans</item>
+        <item name="fontFamily">@font/plus_jakarta_sans</item>
     </style>
+
 </resources>

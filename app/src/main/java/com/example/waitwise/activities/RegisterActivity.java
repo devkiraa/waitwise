@@ -17,7 +17,10 @@ import com.example.waitwise.R;
 import com.example.waitwise.models.User;
 import com.example.waitwise.repositories.UserRepository;
 import com.example.waitwise.utils.EdgeToEdgeUtils;
+import com.example.waitwise.utils.FcmTokenManager;
 import com.example.waitwise.utils.FirebaseManager;
+import com.example.waitwise.utils.PopupUtils;
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -29,7 +32,7 @@ public class RegisterActivity extends AppCompatActivity {
     private EditText etRegEmail;
     private EditText etRegPassword;
     private EditText etRegConfirmPassword;
-    private ProgressBar progressBarRegister;
+    private ShimmerFrameLayout shimmerRegister;
     private MaterialButton btnRegister;
     private UserRepository userRepository;
 
@@ -45,7 +48,7 @@ public class RegisterActivity extends AppCompatActivity {
         etRegEmail = findViewById(R.id.etRegEmail);
         etRegPassword = findViewById(R.id.etRegPassword);
         etRegConfirmPassword = findViewById(R.id.etRegConfirmPassword);
-        progressBarRegister = findViewById(R.id.progressBarRegister);
+        shimmerRegister = findViewById(R.id.shimmerRegister);
         btnRegister = findViewById(R.id.btnRegister);
         TextView tvGoToLogin = findViewById(R.id.tvGoToLogin);
 
@@ -107,25 +110,33 @@ public class RegisterActivity extends AppCompatActivity {
                             // 2. Persist user record in Realtime Database as customer role
                             User user = new User(uid, name, email, User.ROLE_CUSTOMER, System.currentTimeMillis());
                             userRepository.saveUserProfile(user, null);
+                            FcmTokenManager.syncFcmToken(uid);
                         }
 
                         // 3. Dismiss loader, notify user, and log them into MainActivity
                         setLoading(false);
-                        Toast.makeText(RegisterActivity.this, "Account created successfully! Welcome, " + name, Toast.LENGTH_SHORT).show();
+                        PopupUtils.showPopup(RegisterActivity.this, "Welcome to WaitWise", "Account created successfully! Welcome, " + name);
                         goToMainActivity();
                     } else {
                         setLoading(false);
                         String errorMsg = task.getException() != null
                                 ? task.getException().getMessage()
                                 : "Registration failed.";
-                        Toast.makeText(RegisterActivity.this, errorMsg, Toast.LENGTH_LONG).show();
+                        PopupUtils.showPopup(RegisterActivity.this, "Registration Failed", errorMsg);
                     }
                 });
     }
 
     private void setLoading(boolean isLoading) {
-        progressBarRegister.setVisibility(isLoading ? View.VISIBLE : View.GONE);
-        btnRegister.setEnabled(!isLoading);
+        if (shimmerRegister != null) {
+            shimmerRegister.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+            if (isLoading) shimmerRegister.startShimmer();
+            else shimmerRegister.stopShimmer();
+        }
+        if (btnRegister != null) {
+            btnRegister.setVisibility(isLoading ? View.GONE : View.VISIBLE);
+            btnRegister.setEnabled(!isLoading);
+        }
         etRegName.setEnabled(!isLoading);
         etRegEmail.setEnabled(!isLoading);
         etRegPassword.setEnabled(!isLoading);

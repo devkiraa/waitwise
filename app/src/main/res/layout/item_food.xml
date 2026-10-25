@@ -110,19 +110,37 @@
 
         </LinearLayout>
 
-        <!-- Add Button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnAddToCart"
-            style="@style/Widget.Material3.Button"
-            android:layout_width="44dp"
-            android:layout_height="40dp"
+        <!-- Add Button & Favorite Button -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:minWidth="0dp"
-            android:text="+"
-            android:textColor="@color/ww_surface"
-            android:textSize="22sp"
-            app:backgroundTint="@color/ww_primary"
-            app:cornerRadius="10dp" />
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageButton
+                android:id="@+id/btnFavorite"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Favorite food item"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_heart_outline" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAddToCart"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="44dp"
+                android:layout_height="40dp"
+                android:layout_marginTop="6dp"
+                android:minWidth="0dp"
+                android:text="+"
+                android:textColor="@color/ww_surface"
+                android:textSize="22sp"
+                app:backgroundTint="@color/ww_primary"
+                app:cornerRadius="10dp" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

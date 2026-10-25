@@ -12,9 +12,11 @@ public class FirebaseManager {
     private final FirebaseAuth auth;
     private final FirebaseDatabase database;
 
+    private static final String DATABASE_URL = "https://waitwise-in-default-rtdb.asia-southeast1.firebasedatabase.app";
+
     private FirebaseManager() {
         auth = FirebaseAuth.getInstance();
-        database = FirebaseDatabase.getInstance();
+        database = FirebaseDatabase.getInstance(DATABASE_URL);
     }
 
     public static synchronized FirebaseManager getInstance() {

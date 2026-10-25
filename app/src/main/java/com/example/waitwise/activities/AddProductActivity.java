@@ -9,9 +9,7 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
-import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -22,6 +20,8 @@ import com.example.waitwise.repositories.MenuRepository;
 import com.example.waitwise.repositories.UserRepository;
 import com.example.waitwise.utils.FirebaseManager;
 import com.example.waitwise.utils.ImageLoader;
+import com.example.waitwise.utils.PopupUtils;
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.materialswitch.MaterialSwitch;
@@ -36,7 +36,7 @@ public class AddProductActivity extends AppCompatActivity {
     private AutoCompleteTextView actvCategory;
     private EditText etProductImageUrl;
     private MaterialSwitch switchProductAvailable;
-    private ProgressBar progressBarAddProduct;
+    private ShimmerFrameLayout shimmerAddProduct;
     private MaterialButton btnSaveProduct;
     private MaterialButton btnCancelProduct;
 
@@ -62,7 +62,7 @@ public class AddProductActivity extends AppCompatActivity {
             @Override
             public void onRoleLoaded(String role) {
                 if (!User.ROLE_ADMIN.equalsIgnoreCase(role)) {
-                    Toast.makeText(AddProductActivity.this, "Access denied.", Toast.LENGTH_SHORT).show();
+                    PopupUtils.showPopup(AddProductActivity.this, "Access Denied", "Administrator access required.");
                     finish();
                 }
             }
@@ -102,7 +102,7 @@ public class AddProductActivity extends AppCompatActivity {
         actvCategory = findViewById(R.id.actvCategory);
         etProductImageUrl = findViewById(R.id.etProductImageUrl);
         switchProductAvailable = findViewById(R.id.switchProductAvailable);
-        progressBarAddProduct = findViewById(R.id.progressBarAddProduct);
+        shimmerAddProduct = findViewById(R.id.shimmerAddProduct);
         btnSaveProduct = findViewById(R.id.btnSaveProduct);
         btnCancelProduct = findViewById(R.id.btnCancelProduct);
 
@@ -209,14 +209,14 @@ public class AddProductActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess() {
                     setSaving(false);
-                    Toast.makeText(AddProductActivity.this, "Product updated successfully!", Toast.LENGTH_SHORT).show();
+                    PopupUtils.showPopup(AddProductActivity.this, "Product Updated", "Product details updated successfully!");
                     finish();
                 }
 
                 @Override
                 public void onError(String errorMessage) {
                     setSaving(false);
-                    Toast.makeText(AddProductActivity.this, "Failed to update product: " + errorMessage, Toast.LENGTH_LONG).show();
+                    PopupUtils.showPopup(AddProductActivity.this, "Update Error", errorMessage);
                 }
             });
         } else {
@@ -236,14 +236,14 @@ public class AddProductActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess() {
                     setSaving(false);
-                    Toast.makeText(AddProductActivity.this, "Product added to menu successfully!", Toast.LENGTH_SHORT).show();
+                    PopupUtils.showPopup(AddProductActivity.this, "Product Added", "Product added to menu successfully!");
                     finish();
                 }
 
                 @Override
                 public void onError(String errorMessage) {
                     setSaving(false);
-                    Toast.makeText(AddProductActivity.this, "Failed to add product: " + errorMessage, Toast.LENGTH_LONG).show();
+                    PopupUtils.showPopup(AddProductActivity.this, "Add Product Error", errorMessage);
                 }
             });
         }
@@ -251,7 +251,11 @@ public class AddProductActivity extends AppCompatActivity {
 
     private void setSaving(boolean saving) {
         isSaving = saving;
-        progressBarAddProduct.setVisibility(saving ? View.VISIBLE : View.GONE);
+        if (shimmerAddProduct != null) {
+            shimmerAddProduct.setVisibility(saving ? View.VISIBLE : View.GONE);
+            if (saving) shimmerAddProduct.startShimmer();
+            else shimmerAddProduct.stopShimmer();
+        }
         btnSaveProduct.setEnabled(!saving);
         btnCancelProduct.setEnabled(!saving);
         etProductName.setEnabled(!saving);

@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Base.Theme.WaitWise"
-        parent="Theme.Material3.Light.NoActionBar">
+    <style name="Base.Theme.WaitWise" parent="Theme.Material3.Light.NoActionBar">
 
         <item name="colorPrimary">@color/ww_primary</item>
         <item name="colorOnPrimary">@color/ww_surface</item>
@@ -18,8 +17,30 @@
         <item name="android:windowLightNavigationBar">true</item>
 
         <item name="android:windowBackground">@color/ww_background</item>
-        <item name="android:fontFamily">sans</item>
+        <item name="android:fontFamily">@font/plus_jakarta_sans</item>
+        <item name="fontFamily">@font/plus_jakarta_sans</item>
 
+        <item name="textAppearanceDisplayLarge">@style/TextAppearance.WaitWise.PlusJakarta</item>
+        <item name="textAppearanceDisplayMedium">@style/TextAppearance.WaitWise.PlusJakarta</item>
+        <item name="textAppearanceDisplaySmall">@style/TextAppearance.WaitWise.PlusJakarta</item>
+        <item name="textAppearanceHeadlineLarge">@style/TextAppearance.WaitWise.PlusJakarta</item>
+        <item name="textAppearanceHeadlineMedium">@style/TextAppearance.WaitWise.PlusJakarta</item>
+        <item name="textAppearanceHeadlineSmall">@style/TextAppearance.WaitWise.PlusJakarta</item>
+        <item name="textAppearanceTitleLarge">@style/TextAppearance.WaitWise.PlusJakarta</item>
+        <item name="textAppearanceTitleMedium">@style/TextAppearance.WaitWise.PlusJakarta</item>
+        <item name="textAppearanceTitleSmall">@style/TextAppearance.WaitWise.PlusJakarta</item>
+        <item name="textAppearanceBodyLarge">@style/TextAppearance.WaitWise.PlusJakarta</item>
+        <item name="textAppearanceBodyMedium">@style/TextAppearance.WaitWise.PlusJakarta</item>
+        <item name="textAppearanceBodySmall">@style/TextAppearance.WaitWise.PlusJakarta</item>
+        <item name="textAppearanceLabelLarge">@style/TextAppearance.WaitWise.PlusJakarta</item>
+        <item name="textAppearanceLabelMedium">@style/TextAppearance.WaitWise.PlusJakarta</item>
+        <item name="textAppearanceLabelSmall">@style/TextAppearance.WaitWise.PlusJakarta</item>
+
+    </style>
+
+    <style name="TextAppearance.WaitWise.PlusJakarta" parent="TextAppearance.Material3.BodyMedium">
+        <item name="fontFamily">@font/plus_jakarta_sans</item>
+        <item name="android:fontFamily">@font/plus_jakarta_sans</item>
     </style>
 
     <style name="Theme.WaitWise" parent="Base.Theme.WaitWise" />

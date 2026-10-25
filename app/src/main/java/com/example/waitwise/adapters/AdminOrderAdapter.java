@@ -9,6 +9,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.waitwise.R;
@@ -29,6 +30,7 @@ public class AdminOrderAdapter extends RecyclerView.Adapter<AdminOrderAdapter.Ad
     public interface OnOrderAdminActionListener {
         void onAdvanceStatus(Order order, String nextStatus);
         void onCancelOrder(Order order);
+        void onUpdatePrepTime(Order order, int minutes);
     }
 
     private final List<Order> orders = new ArrayList<>();
@@ -70,11 +72,13 @@ public class AdminOrderAdapter extends RecyclerView.Adapter<AdminOrderAdapter.Ad
         private final TextView tvAdminOrderToken;
         private final TextView tvAdminOrderStatus;
         private final TextView tvAdminOrderMeta;
+        private final TextView tvAdminOrderPrepTime;
         private final TextView tvAdminOrderItems;
         private final TextView tvAdminOrderPayment;
         private final TextView tvAdminOrderTotal;
         private final LinearLayout layoutAdminOrderActions;
         private final MaterialButton btnAdvanceStatus;
+        private final MaterialButton btnSetPrepTime;
         private final MaterialButton btnCancelOrder;
 
         AdminOrderViewHolder(@NonNull View itemView) {
@@ -82,11 +86,13 @@ public class AdminOrderAdapter extends RecyclerView.Adapter<AdminOrderAdapter.Ad
             tvAdminOrderToken = itemView.findViewById(R.id.tvAdminOrderToken);
             tvAdminOrderStatus = itemView.findViewById(R.id.tvAdminOrderStatus);
             tvAdminOrderMeta = itemView.findViewById(R.id.tvAdminOrderMeta);
+            tvAdminOrderPrepTime = itemView.findViewById(R.id.tvAdminOrderPrepTime);
             tvAdminOrderItems = itemView.findViewById(R.id.tvAdminOrderItems);
             tvAdminOrderPayment = itemView.findViewById(R.id.tvAdminOrderPayment);
             tvAdminOrderTotal = itemView.findViewById(R.id.tvAdminOrderTotal);
             layoutAdminOrderActions = itemView.findViewById(R.id.layoutAdminOrderActions);
             btnAdvanceStatus = itemView.findViewById(R.id.btnAdvanceStatus);
+            btnSetPrepTime = itemView.findViewById(R.id.btnSetPrepTime);
             btnCancelOrder = itemView.findViewById(R.id.btnCancelOrder);
         }
 
@@ -96,6 +102,14 @@ public class AdminOrderAdapter extends RecyclerView.Adapter<AdminOrderAdapter.Ad
 
             String timeStr = order.getCreatedAt() > 0 ? dateFormat.format(new Date(order.getCreatedAt())) : "";
             tvAdminOrderMeta.setText("Order #" + order.getOrderId() + " • " + timeStr);
+
+            String estStr = order.getFormattedPrepTimeEstimate();
+            if (estStr != null && !estStr.isEmpty()) {
+                tvAdminOrderPrepTime.setVisibility(View.VISIBLE);
+                tvAdminOrderPrepTime.setText(estStr);
+            } else {
+                tvAdminOrderPrepTime.setVisibility(View.GONE);
+            }
 
             tvAdminOrderPayment.setText(order.getPaymentMethod() + " (" + order.getPaymentStatus() + ")");
             tvAdminOrderTotal.setText(PriceUtils.formatPrice(order.getSubtotal()));
@@ -128,15 +142,15 @@ public class AdminOrderAdapter extends RecyclerView.Adapter<AdminOrderAdapter.Ad
                     break;
                 case Order.STATUS_ACCEPTED:
                     nextStatus = Order.STATUS_PREPARING;
-                    actionLabel = "Start Preparing (Kitchen)";
+                    actionLabel = "Start Prep";
                     break;
                 case Order.STATUS_PREPARING:
                     nextStatus = Order.STATUS_READY;
-                    actionLabel = "Mark Ready for Pickup";
+                    actionLabel = "Mark Ready";
                     break;
                 case Order.STATUS_READY:
                     nextStatus = Order.STATUS_COLLECTED;
-                    actionLabel = "Mark Collected by Customer";
+                    actionLabel = "Mark Collected";
                     break;
                 case Order.STATUS_COLLECTED:
                 case Order.STATUS_CANCELLED:
@@ -152,6 +166,21 @@ public class AdminOrderAdapter extends RecyclerView.Adapter<AdminOrderAdapter.Ad
                 final String targetStatus = nextStatus;
                 btnAdvanceStatus.setOnClickListener(v -> {
                     if (listener != null) listener.onAdvanceStatus(order, targetStatus);
+                });
+
+                btnSetPrepTime.setOnClickListener(v -> {
+                    String[] options = {"5 Minutes", "10 Minutes", "15 Minutes", "20 Minutes", "Clear Estimate"};
+                    int[] minutes = {5, 10, 15, 20, 0};
+
+                    new AlertDialog.Builder(v.getContext())
+                            .setTitle("Set Estimated Prep Time")
+                            .setItems(options, (dialog, which) -> {
+                                if (listener != null) {
+                                    listener.onUpdatePrepTime(order, minutes[which]);
+                                }
+                            })
+                            .setNegativeButton("Cancel", null)
+                            .show();
                 });
 
                 // Can cancel if not yet collected or cancelled

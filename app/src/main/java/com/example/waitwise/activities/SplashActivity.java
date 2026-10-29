@@ -2,16 +2,13 @@ package com.example.waitwise.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.splashscreen.SplashScreen;
 
 import com.example.waitwise.MainActivity;
-import com.example.waitwise.R;
 import com.example.waitwise.models.User;
 import com.example.waitwise.repositories.UserRepository;
-import com.example.waitwise.utils.EdgeToEdgeUtils;
 import com.example.waitwise.utils.FcmTokenManager;
 import com.example.waitwise.utils.FirebaseManager;
 
@@ -21,13 +18,11 @@ public class SplashActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_splash);
-        EdgeToEdgeUtils.applyEdgeToEdge(this, findViewById(R.id.splashRoot));
 
         userRepository = new UserRepository();
-
-        new Handler(Looper.getMainLooper()).postDelayed(this::checkAuthAndNavigate, 1200);
+        checkAuthAndNavigate();
     }
 
     private void checkAuthAndNavigate() {

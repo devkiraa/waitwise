@@ -6,8 +6,8 @@
     },
     "users": {
       "$uid": {
-        ".read": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'admin')",
-        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || (auth.uid === $uid && (!data.exists() && (!newData.hasChild('role') || newData.child('role').val() === 'customer') || (data.exists() && (!newData.hasChild('role') || newData.child('role').val() === data.child('role').val())))))"
+        ".read": "auth != null",
+        ".write": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'admin')"
       }
     },
     "carts": {

@@ -219,13 +219,17 @@ public class ProfileActivity extends AppCompatActivity {
         }
 
         String existingRole = currentUser != null ? currentUser.getRole() : User.ROLE_CUSTOMER;
+        String userEmail = currentUser != null && !TextUtils.isEmpty(currentUser.getEmail())
+                ? currentUser.getEmail()
+                : (fbUser != null && !TextUtils.isEmpty(fbUser.getEmail()) ? fbUser.getEmail() : "");
+
         if (currentUser == null) {
-            currentUser = new User(currentUserId, newName, FirebaseManager.getInstance().getCurrentUserEmail(), existingRole, System.currentTimeMillis());
+            currentUser = new User(currentUserId, newName, userEmail, existingRole, System.currentTimeMillis());
         } else {
             currentUser.setName(newName);
         }
 
-        userRepository.saveUserProfile(currentUser, new UserRepository.ActionCallback() {
+        userRepository.updateProfileName(currentUserId, newName, new UserRepository.ActionCallback() {
             @Override
             public void onSuccess() {
                 if (shimmerProfile != null) {
@@ -233,7 +237,7 @@ public class ProfileActivity extends AppCompatActivity {
                     shimmerProfile.setVisibility(View.GONE);
                 }
                 btnUpdateProfile.setEnabled(true);
-                displayUserData(newName, currentUser.getEmail(), currentUser.getRole());
+                displayUserData(newName, userEmail, existingRole);
                 PopupUtils.showPopup(ProfileActivity.this, "Profile Updated", "Your profile details have been saved successfully!");
             }
 
@@ -244,8 +248,8 @@ public class ProfileActivity extends AppCompatActivity {
                     shimmerProfile.setVisibility(View.GONE);
                 }
                 btnUpdateProfile.setEnabled(true);
-                displayUserData(newName, currentUser.getEmail(), currentUser.getRole());
-                PopupUtils.showPopup(ProfileActivity.this, "Profile Saved", "Saved locally. Notice: " + errorMessage);
+                displayUserData(newName, userEmail, existingRole);
+                PopupUtils.showPopup(ProfileActivity.this, "Update Failed", errorMessage);
             }
         });
     }

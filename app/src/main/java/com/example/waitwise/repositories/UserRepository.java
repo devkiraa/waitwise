@@ -12,6 +12,8 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class UserRepository {
@@ -124,9 +126,36 @@ public class UserRepository {
             return;
         }
 
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", user.getId());
+        map.put("name", user.getName());
+        map.put("email", user.getEmail());
+        map.put("role", user.getRole() != null ? user.getRole() : User.ROLE_CUSTOMER);
+        map.put("createdAt", user.getCreatedAt() > 0 ? user.getCreatedAt() : System.currentTimeMillis());
+
         FirebaseManager.getInstance()
                 .getUserRef(user.getId())
-                .setValue(user)
+                .updateChildren(map)
+                .addOnSuccessListener(aVoid -> {
+                    if (callback != null) callback.onSuccess();
+                })
+                .addOnFailureListener(e -> {
+                    if (callback != null) callback.onError(e.getMessage());
+                });
+    }
+
+    public void updateProfileName(@NonNull String userId, @NonNull String newName, final ActionCallback callback) {
+        if (userId == null || userId.isEmpty()) {
+            if (callback != null) callback.onError("Invalid user ID.");
+            return;
+        }
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("name", newName);
+
+        FirebaseManager.getInstance()
+                .getUserRef(userId)
+                .updateChildren(updates)
                 .addOnSuccessListener(aVoid -> {
                     if (callback != null) callback.onSuccess();
                 })

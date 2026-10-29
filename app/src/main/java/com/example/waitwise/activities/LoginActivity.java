@@ -124,6 +124,30 @@ public class LoginActivity extends AppCompatActivity {
 
         FcmTokenManager.syncFcmToken(uid);
 
+        FirebaseUser fbUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (fbUser != null) {
+            String name = !TextUtils.isEmpty(fbUser.getDisplayName())
+                    ? fbUser.getDisplayName()
+                    : (fbUser.getEmail() != null && fbUser.getEmail().contains("@") ? fbUser.getEmail().split("@")[0] : "Customer");
+            String email = fbUser.getEmail() != null ? fbUser.getEmail() : "";
+            userRepository.getUserProfile(uid, new UserRepository.UserCallback() {
+                @Override
+                public void onUserLoaded(User user) {
+                    if (TextUtils.isEmpty(user.getName()) || TextUtils.isEmpty(user.getEmail())) {
+                        user.setName(!TextUtils.isEmpty(user.getName()) ? user.getName() : name);
+                        user.setEmail(!TextUtils.isEmpty(user.getEmail()) ? user.getEmail() : email);
+                        userRepository.saveUserProfile(user, null);
+                    }
+                }
+
+                @Override
+                public void onError(String errorMessage) {
+                    User newUser = new User(uid, name, email, User.ROLE_CUSTOMER, System.currentTimeMillis());
+                    userRepository.saveUserProfile(newUser, null);
+                }
+            });
+        }
+
         AtomicBoolean routed = new AtomicBoolean(false);
         Handler handler = new Handler(Looper.getMainLooper());
 

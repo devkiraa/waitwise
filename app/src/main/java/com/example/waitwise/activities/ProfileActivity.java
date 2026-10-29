@@ -125,54 +125,58 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void loadProfile() {
-        String email = FirebaseManager.getInstance().getCurrentUserEmail();
         FirebaseUser fbUser = FirebaseManager.getInstance().getCurrentUser();
-        String initialName = fbUser != null && !TextUtils.isEmpty(fbUser.getDisplayName())
-                ? fbUser.getDisplayName()
-                : (email != null && email.contains("@") ? email.split("@")[0] : "Customer");
+        String authEmail = fbUser != null && !TextUtils.isEmpty(fbUser.getEmail()) ? fbUser.getEmail() : FirebaseManager.getInstance().getCurrentUserEmail();
+        if (authEmail == null) authEmail = "";
 
-        displayUserData(initialName, email != null ? email : "", User.ROLE_CUSTOMER);
+        String authName = fbUser != null && !TextUtils.isEmpty(fbUser.getDisplayName())
+                ? fbUser.getDisplayName()
+                : (authEmail.contains("@") ? authEmail.split("@")[0] : "Customer");
+
+        // Immediately display Firebase Auth user info so screen is NEVER blank
+        displayUserData(authName, authEmail, User.ROLE_CUSTOMER);
 
         if (shimmerProfile != null) {
             shimmerProfile.startShimmer();
             shimmerProfile.setVisibility(View.VISIBLE);
         }
 
-        AtomicBoolean loaded = new AtomicBoolean(false);
-        Handler handler = new Handler(Looper.getMainLooper());
-        Runnable timeoutRunnable = () -> {
-            if (loaded.compareAndSet(false, true)) {
-                if (shimmerProfile != null) {
-                    shimmerProfile.stopShimmer();
-                    shimmerProfile.setVisibility(View.GONE);
-                }
-            }
-        };
-        handler.postDelayed(timeoutRunnable, 3500);
+        final String finalAuthName = authName;
+        final String finalAuthEmail = authEmail;
 
         userRepository.getUserProfile(currentUserId, new UserRepository.UserCallback() {
             @Override
             public void onUserLoaded(User user) {
-                if (loaded.compareAndSet(false, true)) {
-                    handler.removeCallbacks(timeoutRunnable);
-                }
                 if (shimmerProfile != null) {
                     shimmerProfile.stopShimmer();
                     shimmerProfile.setVisibility(View.GONE);
                 }
                 currentUser = user;
-                displayUserData(user.getName(), user.getEmail(), user.getRole());
+                String name = !TextUtils.isEmpty(user.getName()) ? user.getName() : finalAuthName;
+                String email = !TextUtils.isEmpty(user.getEmail()) ? user.getEmail() : finalAuthEmail;
+                String role = !TextUtils.isEmpty(user.getRole()) ? user.getRole() : User.ROLE_CUSTOMER;
+
+                displayUserData(name, email, role);
+
+                // Auto-sync missing database fields if needed
+                if (TextUtils.isEmpty(user.getName()) || TextUtils.isEmpty(user.getEmail())) {
+                    user.setName(name);
+                    user.setEmail(email);
+                    userRepository.saveUserProfile(user, null);
+                }
             }
 
             @Override
             public void onError(String errorMessage) {
-                if (loaded.compareAndSet(false, true)) {
-                    handler.removeCallbacks(timeoutRunnable);
-                }
                 if (shimmerProfile != null) {
                     shimmerProfile.stopShimmer();
                     shimmerProfile.setVisibility(View.GONE);
                 }
+                // Keep displaying Auth user info and auto-create user record in database
+                displayUserData(finalAuthName, finalAuthEmail, User.ROLE_CUSTOMER);
+                User newUser = new User(currentUserId, finalAuthName, finalAuthEmail, User.ROLE_CUSTOMER, System.currentTimeMillis());
+                currentUser = newUser;
+                userRepository.saveUserProfile(newUser, null);
             }
         });
     }
